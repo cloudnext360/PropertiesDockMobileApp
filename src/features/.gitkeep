@@ -1,0 +1,2 @@
+# Feature modules live here (buy, property, list, invest, account, auth).
+# Each feature owns its screens' components, hooks, and forms — see MOBILE_PLAN.md §6.
