@@ -19,17 +19,32 @@ export function getNotifications(): typeof import("expo-notifications") | null {
   return require("expo-notifications") as typeof import("expo-notifications");
 }
 
+// The conversation the user is currently viewing, if any. A chat push for this
+// conversation is suppressed in the foreground (they're already reading it).
+let activeConversationId: string | null = null;
+export function setActiveConversation(conversationId: string | null): void {
+  activeConversationId = conversationId;
+}
+
 /** Foreground presentation: show a banner + list entry, no sound. */
 export function configureNotificationHandler() {
   const Notifications = getNotifications();
   if (!Notifications) return;
   Notifications.setNotificationHandler({
-    handleNotification: async () => ({
-      shouldShowBanner: true,
-      shouldShowList: true,
-      shouldPlaySound: false,
-      shouldSetBadge: true,
-    }),
+    handleNotification: async (notification) => {
+      const data = notification.request.content.data as Record<string, unknown> | undefined;
+      // Don't banner a chat message for the thread that's already open.
+      const suppress =
+        !!activeConversationId &&
+        typeof data?.conversationId === "string" &&
+        data.conversationId === activeConversationId;
+      return {
+        shouldShowBanner: !suppress,
+        shouldShowList: true,
+        shouldPlaySound: false,
+        shouldSetBadge: true,
+      };
+    },
   });
 }
 
@@ -85,10 +100,14 @@ export async function sendTokenToBackend(token: string): Promise<void> {
 /** Map a notification's `data` payload to an in-app route (deep link on tap). */
 export function routeFromNotification(data: Record<string, unknown> | undefined): string | null {
   if (!data) return null;
-  if (typeof data.url === "string") return data.url;
   const type = typeof data.type === "string" ? data.type : undefined;
   const slug = typeof data.slug === "string" ? data.slug : undefined;
   const id = typeof data.id === "string" ? data.id : undefined;
+  const conversationId =
+    typeof data.conversationId === "string" ? data.conversationId : undefined;
+  // Chat takes priority so it lands in the thread even if a generic url is present.
+  if (type === "CHAT" && conversationId) return `/chat/${conversationId}`;
+  if (typeof data.url === "string") return data.url;
   if (type === "PROPERTY" && slug) return `/property/${slug}`;
   if (type === "AGENCY" && slug) return `/agency/${slug}`;
   if (type === "USER" && id) return `/users/${id}`;

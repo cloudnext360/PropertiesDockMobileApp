@@ -1,5 +1,6 @@
 import { FlashList } from "@shopify/flash-list";
-import { List, MapPin, Search, SlidersHorizontal } from "lucide-react-native";
+import { useRouter } from "expo-router";
+import { ChevronLeft, List, MapPin, Search, SlidersHorizontal } from "lucide-react-native";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Pressable, RefreshControl, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -22,7 +23,13 @@ function countActive(f: PropertyFilterValues): number {
   return Object.values(f).filter((v) => v !== undefined && v !== "").length;
 }
 
-export default function BuyScreen() {
+/**
+ * Property search / browse. Reached on demand from the Home search bar
+ * (router.push("/search")) — it's a pushed root screen, not a tab, so it opens
+ * full-screen with a back button instead of living in the bottom nav.
+ */
+export default function SearchScreen() {
+  const router = useRouter();
   const tokens = useThemeTokens();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
@@ -91,11 +98,20 @@ export default function BuyScreen() {
   const activeCount = countActive(filters);
 
   return (
-    <View className="flex-1 bg-background">
-      {/* Header: title, search pill + filter, category chips */}
+    <View className="flex-1 bg-white dark:bg-background">
+      {/* Header: back + title, search pill + filter, category chips */}
       <View style={{ paddingTop: insets.top }}>
-        <View className="flex-row items-center justify-between px-4 pt-1">
-          <Text className="text-2xl font-jakarta-extrabold text-foreground">Explore homes</Text>
+        <View className="flex-row items-center gap-2 px-4 pt-1">
+          <Pressable
+            onPress={() => router.back()}
+            hitSlop={10}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+            className="-ml-1 h-9 w-9 items-center justify-center rounded-full active:bg-card"
+          >
+            <ChevronLeft size={24} color={tokens.foreground} />
+          </Pressable>
+          <Text className="flex-1 text-2xl font-jakarta-extrabold text-foreground">Explore homes</Text>
           <Text className="text-xs text-muted-foreground">
             {isLoading ? "Loading…" : `${total} result${total === 1 ? "" : "s"}`}
           </Text>
@@ -111,6 +127,7 @@ export default function BuyScreen() {
               value={text}
               onChangeText={setText}
               returnKeyType="search"
+              autoFocus
             />
           </View>
           <Pressable

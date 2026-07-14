@@ -1,5 +1,10 @@
+import { AccountShell } from "@/features/account/AccountShell";
 import { SavedList } from "@/features/account/SavedList";
 
 export default function SavedPropertiesScreen() {
-  return <SavedList />;
+  return (
+    <AccountShell active="saved">
+      <SavedList />
+    </AccountShell>
+  );
 }

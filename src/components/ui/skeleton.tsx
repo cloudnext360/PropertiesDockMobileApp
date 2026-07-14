@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 export function Skeleton({ className }: { className?: string }) {
   return (
     <MotiView
-      from={{ opacity: 0.4 }}
+      from={{ opacity: 0.7 }}
       animate={{ opacity: 1 }}
       transition={{ loop: true, repeatReverse: true, type: "timing", duration: 900 }}
       className={cn("rounded-md bg-muted", className)}

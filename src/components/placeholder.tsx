@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { View } from "react-native";
 
 import { FadeInView } from "@/components/ui/fade-in";
@@ -8,15 +9,17 @@ interface PlaceholderProps {
   subtitle?: string;
   /** Primary endpoint(s) this screen will hit — from MOBILE_PLAN.md §4. */
   endpoint?: string;
+  /** Optional actions (e.g. a Message button) rendered below the endpoint hint. */
+  children?: ReactNode;
 }
 
 /**
  * Centered placeholder body for screens that already sit under a navigation
  * header (tab/stack), so it does NOT inset the top safe area itself.
  */
-export function Placeholder({ title, subtitle, endpoint }: PlaceholderProps) {
+export function Placeholder({ title, subtitle, endpoint, children }: PlaceholderProps) {
   return (
-    <View className="flex-1 items-center justify-center bg-background px-6">
+    <View className="flex-1 items-center justify-center bg-white dark:bg-background px-6">
       <FadeInView className="items-center gap-3">
         <Text className="text-2xl font-jakarta-bold text-brand">{title}</Text>
         {subtitle ? (
@@ -27,6 +30,7 @@ export function Placeholder({ title, subtitle, endpoint }: PlaceholderProps) {
             {endpoint}
           </Text>
         ) : null}
+        {children ? <View className="mt-2">{children}</View> : null}
       </FadeInView>
     </View>
   );

@@ -20,7 +20,7 @@ export function SavedList() {
 
   if (!user) {
     return (
-      <View className="flex-1 items-center justify-center gap-3 bg-background px-8">
+      <View className="flex-1 items-center justify-center gap-3 bg-white dark:bg-background px-8">
         <Text className="text-center text-muted-foreground">Sign in to view your saved properties.</Text>
         <Button variant="brand" size="sm" onPress={() => router.push("/auth")}>
           Sign in
@@ -31,7 +31,7 @@ export function SavedList() {
 
   if (isLoading) {
     return (
-      <View className="gap-3 bg-background p-4">
+      <View className="gap-3 bg-white dark:bg-background p-4">
         {[0, 1, 2].map((i) => (
           <Skeleton key={i} className="h-24 w-full rounded-xl" />
         ))}
@@ -43,7 +43,7 @@ export function SavedList() {
   const items = data ?? [];
   if (items.length === 0) {
     return (
-      <View className="flex-1 items-center justify-center gap-2 bg-background px-8">
+      <View className="flex-1 items-center justify-center gap-2 bg-white dark:bg-background px-8">
         <Text className="text-center font-jakarta-semibold text-foreground">No saved properties</Text>
         <Text className="text-center text-sm text-muted-foreground">
           Tap the heart on any listing to save it here.
