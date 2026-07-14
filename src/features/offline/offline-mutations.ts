@@ -26,10 +26,10 @@ export function registerOfflineMutations() {
   });
 
   queryClient.setMutationDefaults(MUTATION_KEYS.saveProperty, {
-    mutationFn: (propertyId: string) => apiPost(`/saved-properties/${propertyId}`, {}),
+    mutationFn: (propertyId: string) => apiPost(`/api/saved-properties/${propertyId}`, {}),
   });
 
   queryClient.setMutationDefaults(MUTATION_KEYS.unsaveProperty, {
-    mutationFn: (savedId: string) => apiDelete(`/saved-properties/${savedId}`),
+    mutationFn: (savedId: string) => apiDelete(`/api/saved-properties/${savedId}`),
   });
 }

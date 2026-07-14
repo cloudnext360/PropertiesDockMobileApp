@@ -1,7 +1,8 @@
 import { Tabs } from "expo-router";
-import { FileText, Heart, House, MessageCircle, User } from "lucide-react-native";
+import { FileText, Heart, House, User } from "lucide-react-native";
 
 import { FloatingTabBar, type FloatingTabBarProps } from "@/components/floating-tab-bar";
+import { ChatTabBarIcon } from "@/features/chat/ChatTabBarIcon";
 import { useThemeTokens } from "@/theme/theme-provider";
 
 /**
@@ -39,7 +40,7 @@ export default function TabsLayout() {
         options={{
           title: "Chat",
           headerShown: false, // the Chat screen renders its own header
-          tabBarIcon: ({ color, size }) => <MessageCircle color={color} size={size} />,
+          tabBarIcon: ({ color, size }) => <ChatTabBarIcon color={color} size={size} />,
         }}
       />
       <Tabs.Screen

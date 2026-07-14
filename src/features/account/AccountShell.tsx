@@ -55,7 +55,7 @@ export function AccountShell({ active, children }: AccountShellProps) {
   };
 
   return (
-    <View className="flex-1 bg-background">
+    <View className="flex-1 bg-white dark:bg-background">
       <View style={{ paddingTop: insets.top }} className="gap-3 p-4 pb-0">
         {/* Profile header */}
         <View className="flex-row items-center gap-3 rounded-xl border border-border bg-card p-4">
@@ -94,7 +94,7 @@ export function AccountShell({ active, children }: AccountShellProps) {
         </View>
 
         {/* Credit wallet summary */}
-        <View className="flex-row items-center gap-3 rounded-xl border border-border bg-card p-3.5">
+        {/* <View className="flex-row items-center gap-3 rounded-xl border border-border bg-card p-3.5">
           <View className="h-10 w-10 items-center justify-center rounded-full bg-brand/10">
             <Coins size={18} color={tokens.brand} />
           </View>
@@ -105,7 +105,7 @@ export function AccountShell({ active, children }: AccountShellProps) {
               <Text className="text-xs font-jakarta-medium text-muted-foreground">credits</Text>
             </Text>
           </View>
-        </View>
+        </View> */}
 
         {/* Segmented tab strip — My Listings / Inquiries / Saved / Settings */}
         <View className="flex-row rounded-xl bg-muted p-1">

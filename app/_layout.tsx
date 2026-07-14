@@ -86,6 +86,8 @@ export default function RootLayout() {
               <Stack.Screen name="search" options={{ headerShown: false }} />
               {/* Property detail — full-bleed, custom in-screen back button */}
               <Stack.Screen name="property/[slug]" options={{ headerShown: false }} />
+              {/* Chat thread — pushed from the Chat tab; renders its own header */}
+              <Stack.Screen name="chat/[id]" options={{ headerShown: false }} />
               {/* Deep-link targets (mirror web URLs) */}
               <Stack.Screen name="agency/[slug]" options={{ headerShown: true, title: "Agency" }} />
               <Stack.Screen name="users/[id]" options={{ headerShown: true, title: "Profile" }} />

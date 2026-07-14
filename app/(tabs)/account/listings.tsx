@@ -56,7 +56,7 @@ export default function ListingsScreen() {
           </Button>
         </View>
       ) : (
-        <View className="flex-1 bg-background">
+        <View className="flex-1 bg-white dark:bg-background">
           <FlashList
             data={items}
             keyExtractor={(p) => p.id}

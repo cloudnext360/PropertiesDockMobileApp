@@ -12,20 +12,20 @@ export default function InquiriesScreen() {
   return (
     <AccountShell active="inquiries">
       {isLoading ? (
-        <View className="gap-3 bg-background p-4">
+        <View className="gap-3 bg-white dark:bg-background p-4">
           {[0, 1, 2].map((i) => (
             <Skeleton key={i} className="h-24 w-full rounded-xl" />
           ))}
         </View>
       ) : isError ? (
-        <View className="flex-1 items-center justify-center gap-3 bg-background px-8">
+        <View className="flex-1 items-center justify-center gap-3 bg-white dark:bg-background px-8">
           <Text className="text-center font-jakarta-semibold text-foreground">Couldn&apos;t load inquiries</Text>
           <Button variant="brand" size="sm" onPress={() => refetch()}>
             Retry
           </Button>
         </View>
       ) : (
-        <View className="flex-1 bg-background">
+        <View className="flex-1 bg-white dark:bg-background">
           <FlashList
             data={data ?? []}
             keyExtractor={(i) => i.id}

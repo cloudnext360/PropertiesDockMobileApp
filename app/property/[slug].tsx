@@ -20,6 +20,7 @@ import {
   Skeleton,
   Text,
 } from "@/components/ui";
+import { MessageButton } from "@/features/chat/MessageButton";
 import { FullscreenGallery } from "@/features/property/FullscreenGallery";
 import { ImageCarousel } from "@/features/property/ImageCarousel";
 import { InquiryForm } from "@/features/property/InquiryForm";
@@ -88,6 +89,8 @@ export default function PropertyDetailScreen() {
   const ownerUser = owner?.user;
   const ownerName = ownerUser ? `${ownerUser.firstName} ${ownerUser.lastName}`.trim() : "Owner";
   const ownerRole = property.agencyMember ? property.agencyMember.agency.name : "Property owner";
+  // Offer chat to everyone except the listing's own owner (can't message yourself).
+  const canMessageOwner = !!ownerUser?.id && ownerUser.id !== user?.userId;
 
   const onToggleSave = () => {
     haptics.light();
@@ -205,12 +208,20 @@ export default function PropertyDetailScreen() {
         </View>
       </ScrollView>
 
-      {/* Bottom Inquire CTA */}
+      {/* Bottom CTAs: Message the owner + Inquire */}
       <View
         style={{ paddingBottom: insets.bottom + 12 }}
-        className="absolute inset-x-0 bottom-0 border-t border-border bg-card px-4 pt-3"
+        className="absolute inset-x-0 bottom-0 flex-row gap-3 border-t border-border bg-card px-4 pt-3"
       >
-        <Button variant="brand" onPress={() => setInquireOpen(true)}>
+        {canMessageOwner && ownerUser ? (
+          <MessageButton
+            recipientId={ownerUser.id}
+            propertyId={property.id}
+            variant="outline"
+            className="flex-1"
+          />
+        ) : null}
+        <Button variant="brand" className="flex-1" onPress={() => setInquireOpen(true)}>
           Inquire
         </Button>
       </View>

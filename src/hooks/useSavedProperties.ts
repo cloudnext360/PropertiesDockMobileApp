@@ -24,7 +24,7 @@ export function useSavedProperties() {
     enabled: !!user,
     retry: false,
     queryFn: async () => {
-      const res = await apiGet<ApiEnvelope<SavedProperty[]>>("/saved-properties");
+      const res = await apiGet<ApiEnvelope<SavedProperty[]>>("/api/saved-properties");
       return res.data ?? [];
     },
   });
@@ -46,13 +46,13 @@ export function useToggleSaveProperty() {
   const save = useMutation({
     mutationKey: MUTATION_KEYS.saveProperty,
     mutationFn: (propertyId: string) =>
-      apiPost<ApiEnvelope<SavedProperty>>(`/saved-properties/${propertyId}`, {}),
+      apiPost<ApiEnvelope<SavedProperty>>(`/api/saved-properties/${propertyId}`, {}),
     onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.savedProperties() }),
   });
 
   const remove = useMutation({
     mutationKey: MUTATION_KEYS.unsaveProperty,
-    mutationFn: (savedId: string) => apiDelete(`/saved-properties/${savedId}`),
+    mutationFn: (savedId: string) => apiDelete(`/api/saved-properties/${savedId}`),
     onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.savedProperties() }),
   });
 
