@@ -3,8 +3,16 @@ import { Stack } from "expo-router";
 import { AuthGate } from "@/components/auth-gate";
 import { useThemeTokens } from "@/theme/theme-provider";
 
-// The Account tab is the folded web dashboard. The whole subtree is gated by
-// AuthGate (mirrors web DashboardShell). Sub-screens get themed headers + back.
+/**
+ * The Account tab is the folded web dashboard. The whole subtree is gated by
+ * AuthGate (mirrors web DashboardShell).
+ *
+ * "index" just redirects into the tab strip (see AccountShell); the four
+ * sub-screens it hosts — listings, inquiries, saved-properties, settings —
+ * render their own chrome (pinned profile header + segmented tabs), so their
+ * native header is hidden. Genuinely pushed screens (edit, profile) keep the
+ * themed header + back button.
+ */
 export default function AccountStackLayout() {
   const tokens = useThemeTokens();
   return (
@@ -17,14 +25,13 @@ export default function AccountStackLayout() {
           headerTitleStyle: { fontFamily: "PlusJakartaSans_600SemiBold" },
         }}
       >
-        <Stack.Screen name="index" options={{ title: "Account" }} />
+        <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen name="listings" options={{ headerShown: false }} />
+        <Stack.Screen name="inquiries" options={{ headerShown: false }} />
+        <Stack.Screen name="saved-properties" options={{ headerShown: false }} />
+        <Stack.Screen name="settings" options={{ headerShown: false }} />
         <Stack.Screen name="edit" options={{ title: "Edit Profile" }} />
-        <Stack.Screen name="listings" options={{ title: "My Listings" }} />
-        <Stack.Screen name="inquiries" options={{ title: "Inquiries" }} />
-        <Stack.Screen name="saved-properties" options={{ title: "Saved Properties" }} />
         <Stack.Screen name="profile" options={{ title: "Profile" }} />
-        <Stack.Screen name="settings" options={{ title: "Settings" }} />
-        <Stack.Screen name="verification" options={{ title: "Verification" }} />
       </Stack>
     </AuthGate>
   );

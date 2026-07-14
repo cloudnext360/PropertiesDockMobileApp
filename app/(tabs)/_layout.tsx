@@ -1,14 +1,16 @@
 import { Tabs } from "expo-router";
-import { FileText, Heart, House, Search, User } from "lucide-react-native";
+import { FileText, Heart, House, MessageCircle, User } from "lucide-react-native";
 
 import { FloatingTabBar, type FloatingTabBarProps } from "@/components/floating-tab-bar";
 import { useThemeTokens } from "@/theme/theme-provider";
 
 /**
- * Bottom-tab shell mirroring the web primary nav (MOBILE_PLAN.md §6):
- *   Home · Buy (Search) · Sell · Saved · Account.
- * The bar is a custom floating pill (see FloatingTabBar); the Account tab is a
- * nested Stack (the folded web dashboard) — see app/(tabs)/account/.
+ * Bottom-tab shell:
+ *   Home · Chat · Sell · Saved · Account.
+ * Property search is no longer a tab — it opens on demand from the Home search
+ * bar (app/search.tsx). The bar is a custom floating pill (see FloatingTabBar);
+ * the Account tab is a nested Stack (the folded web dashboard) — see
+ * app/(tabs)/account/.
  */
 export default function TabsLayout() {
   const tokens = useThemeTokens();
@@ -33,11 +35,11 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="search"
+        name="chat"
         options={{
-          title: "Buy",
-          headerShown: false, // the Buy screen renders its own header (search + chips)
-          tabBarIcon: ({ color, size }) => <Search color={color} size={size} />,
+          title: "Chat",
+          headerShown: false, // the Chat screen renders its own header
+          tabBarIcon: ({ color, size }) => <MessageCircle color={color} size={size} />,
         }}
       />
       <Tabs.Screen

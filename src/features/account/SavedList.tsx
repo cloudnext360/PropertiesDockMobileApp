@@ -20,7 +20,7 @@ export function SavedList() {
 
   if (!user) {
     return (
-      <View className="flex-1 items-center justify-center gap-3 bg-background px-8">
+      <View className="flex-1 items-center justify-center gap-3 bg-muted px-8">
         <Text className="text-center text-muted-foreground">Sign in to view your saved properties.</Text>
         <Button variant="brand" size="sm" onPress={() => router.push("/auth")}>
           Sign in
