@@ -43,11 +43,15 @@ function toFrontend(b: BackendInquiry, direction: "received" | "sent"): Inquiry 
   return {
     id: b.id,
     direction,
+    propertyId: b.propertyId,
     propertyName: b.property.propertyName,
     propertySlug: b.property.slug,
     propertyImage: primaryImage(b.property.images),
     counterpartName: direction === "received" ? b.name : "Property Owner",
     counterpartAvatar: null,
+    // For received inquiries the counterpart is the (optional) signed-in inquirer.
+    // For sent inquiries the owner's user id isn't in this payload.
+    counterpartUserId: direction === "received" ? b.userId : null,
     message: b.message,
     reply: b.response,
     status: mapStatus(b.status),

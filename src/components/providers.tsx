@@ -6,6 +6,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { Toaster } from "sonner-native";
 
 import { AuthProvider } from "@/context/AuthContext";
+import { ChatSocketProvider } from "@/features/chat/ChatSocketProvider";
 import "@/features/offline/online-manager"; // side effect: NetInfo → onlineManager
 import { registerOfflineMutations } from "@/features/offline/offline-mutations";
 import { asyncStoragePersister, queryClient } from "@/lib/query-client";
@@ -31,9 +32,11 @@ export function Providers({ children }: { children: ReactNode }) {
           }}
         >
           <AuthProvider>
-            {children}
-            <PortalHost />
-            <Toaster />
+            <ChatSocketProvider>
+              {children}
+              <PortalHost />
+              <Toaster />
+            </ChatSocketProvider>
           </AuthProvider>
         </PersistQueryClientProvider>
       </SafeAreaProvider>

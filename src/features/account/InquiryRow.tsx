@@ -2,6 +2,7 @@ import { memo } from "react";
 import { View } from "react-native";
 
 import { AppImage, Badge, Text } from "@/components/ui";
+import { MessageButton } from "@/features/chat/MessageButton";
 import type { Inquiry } from "@/types/dashboard";
 
 const STATUS: Record<Inquiry["status"], { label: string; variant: "secondary" | "brand" | "outline" }> = {
@@ -39,6 +40,19 @@ export const InquiryRow = memo(function InquiryRow({ inquiry }: { inquiry: Inqui
           <Badge variant={s.variant}>{s.label}</Badge>
           <Badge variant="outline">{inquiry.direction === "received" ? "Received" : "Sent"}</Badge>
         </View>
+
+        {/* A received inquiry from a signed-in user can be answered in chat. */}
+        {inquiry.direction === "received" && inquiry.counterpartUserId ? (
+          <View className="mt-2 flex-row">
+            <MessageButton
+              recipientId={inquiry.counterpartUserId}
+              propertyId={inquiry.propertyId}
+              label="Reply in chat"
+              variant="outline"
+              size="sm"
+            />
+          </View>
+        ) : null}
       </View>
     </View>
   );

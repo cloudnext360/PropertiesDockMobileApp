@@ -1,7 +1,7 @@
 import { useRouter } from "expo-router";
-import { Bell, MapPin, Search } from "lucide-react-native";
+import { Bell, ChevronDown, MapPin, Search } from "lucide-react-native";
 import { useCallback, useMemo, useState } from "react";
-import { Pressable, ScrollView, View } from "react-native";
+import { ActivityIndicator, Pressable, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { toast } from "sonner-native";
 
@@ -9,7 +9,7 @@ import { FadeInView, Skeleton, Text } from "@/components/ui";
 import { CategoryChips, categoryFilter } from "@/features/property/CategoryChips";
 import { FeaturedPropertyCard } from "@/features/property/FeaturedPropertyCard";
 import { useAuth } from "@/context/AuthContext";
-import { useProperties } from "@/hooks/useProperties";
+import { useInfiniteProperties } from "@/hooks/useInfiniteProperties";
 import { useSavedProperties, useToggleSaveProperty } from "@/hooks/useSavedProperties";
 import { useThemeTokens } from "@/theme/theme-provider";
 import type { ApiProperty } from "@/types/api";
@@ -22,11 +22,12 @@ export default function HomeScreen() {
 
   const [category, setCategory] = useState("all");
   const filters = useMemo(
-    () => ({ limit: 10, sortBy: "newest" as const, ...categoryFilter(category) }),
+    () => ({ sortBy: "newest" as const, ...categoryFilter(category) }),
     [category],
   );
-  const { data, isLoading } = useProperties(filters);
-  const items = data?.properties ?? [];
+  const { data, isLoading, hasNextPage, isFetchingNextPage, fetchNextPage } =
+    useInfiniteProperties(filters);
+  const items = useMemo(() => data?.pages.flatMap((p) => p.items) ?? [], [data]);
 
   // Save/unsave wiring (mirrors the Buy screen) so the heart is functional.
   const savedQuery = useSavedProperties();
@@ -57,7 +58,7 @@ export default function HomeScreen() {
   );
 
   return (
-    <View className="flex-1 bg-background">
+    <View className="flex-1 bg-white dark:bg-background">
       {/* Location + notifications */}
       <View style={{ paddingTop: insets.top }} className="px-4">
         <View className="h-14 flex-row items-center justify-between">
@@ -79,10 +80,10 @@ export default function HomeScreen() {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }}>
         <FadeInView className="gap-4">
           <View className="gap-1 px-4 pt-1">
-            <Text className="text-3xl font-jakarta-extrabold leading-tight text-foreground">
-              Find your place in Oman
+            <Text className="text-3xl font-jakarta-extrabold leading-tight text-brand">
+              PropertiesDock
             </Text>
-            <Text className="text-sm text-muted-foreground">
+            <Text className="text-sm text-foreground">
               Buy, rent, and invest with confidence.
             </Text>
           </View>
@@ -113,16 +114,39 @@ export default function HomeScreen() {
           ) : items.length === 0 ? (
             <Text className="text-sm text-muted-foreground">No listings in this category yet.</Text>
           ) : (
-            <View className="gap-6">
-              {items.map((p) => (
-                <FeaturedPropertyCard
-                  key={p.id}
-                  property={p}
-                  isSaved={savedMap.has(p.id)}
-                  onToggleSave={onToggleSave}
-                />
-              ))}
-            </View>
+            <>
+              <View className="gap-3">
+                {items.map((p) => (
+                  <FeaturedPropertyCard
+                    key={p.id}
+                    property={p}
+                    isSaved={savedMap.has(p.id)}
+                    onToggleSave={onToggleSave}
+                  />
+                ))}
+              </View>
+
+              {hasNextPage ? (
+                <Pressable
+                  onPress={() => {
+                    if (!isFetchingNextPage) fetchNextPage();
+                  }}
+                  disabled={isFetchingNextPage}
+                  accessibilityRole="button"
+                  accessibilityLabel="Load more properties"
+                  className="mt-1 h-11 flex-row items-center justify-center gap-1.5 self-center rounded-full px-6 active:opacity-60"
+                >
+                  {isFetchingNextPage ? (
+                    <ActivityIndicator size="small" color={tokens.brand} />
+                  ) : (
+                    <>
+                      <Text className="text-base font-jakarta-semibold text-brand">Load more</Text>
+                      <ChevronDown size={18} color={tokens.brand} />
+                    </>
+                  )}
+                </Pressable>
+              ) : null}
+            </>
           )}
         </View>
       </ScrollView>

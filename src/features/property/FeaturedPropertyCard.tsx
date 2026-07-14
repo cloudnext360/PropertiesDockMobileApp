@@ -1,11 +1,12 @@
 import { useRouter, type Href } from "expo-router";
-import { Bath, BedDouble, Heart, MapPin, Maximize } from "lucide-react-native";
+import { Bath, BedDouble, Heart, Maximize } from "lucide-react-native";
 import { memo } from "react";
 import { Pressable, View } from "react-native";
 
 import { AppImage, Text } from "@/components/ui";
 import { formatOmr } from "@/constants/locale";
 import { haptics } from "@/lib/haptics";
+import { timeAgo } from "@/lib/utils";
 import { useThemeTokens } from "@/theme/theme-provider";
 import type { ApiProperty } from "@/types/api";
 
@@ -41,7 +42,7 @@ export const FeaturedPropertyCard = memo(function FeaturedPropertyCard({
       }
       accessibilityRole="button"
       accessibilityLabel={`${property.propertyName}, ${formatOmr(property.price, property.currency, property.listingType)}, ${location}`}
-      className="gap-3 active:opacity-95"
+      className="gap-3 active:opacity-95 bg-white border border-gray-100 px-1 py-2.5 rounded-3xl"
     >
       <View className="overflow-hidden rounded-3xl bg-muted">
         <View className="aspect-[16/11]">
@@ -88,11 +89,16 @@ export const FeaturedPropertyCard = memo(function FeaturedPropertyCard({
           {formatOmr(property.price, property.currency, property.listingType)}
         </Text>
       </View>
-
+      <View className="px-1">
+        <Text className="text-sm font-jakarta-bold text-muted-foreground" numberOfLines={1}>
+          {location}
+        </Text>
+      </View>
+      <View className="flex-row items-center justify-between gap-3 px-1">
       <View className="flex-row flex-wrap items-center gap-2 px-1">
-        {location ? (
+        {/* {location ? (
           <SpecPill icon={<MapPin size={13} color={tokens.mutedForeground} />} label={property.city || location} />
-        ) : null}
+        ) : null} */}
         {property.bedrooms != null ? (
           <SpecPill icon={<BedDouble size={14} color={tokens.mutedForeground} />} label={`${property.bedrooms} Bed`} />
         ) : null}
@@ -102,6 +108,13 @@ export const FeaturedPropertyCard = memo(function FeaturedPropertyCard({
         {property.areaSqm != null ? (
           <SpecPill icon={<Maximize size={14} color={tokens.mutedForeground} />} label={`${property.areaSqm} m²`} />
         ) : null}
+      </View>
+      <View>
+        {/* Relative creation time, e.g. "1 day ago" */}
+        <Text className="text-xs font-jakarta-medium text-muted-foreground">
+          {timeAgo(property.createdAt)}
+        </Text>
+      </View>
       </View>
     </Pressable>
   );

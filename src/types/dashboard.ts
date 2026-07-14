@@ -3,11 +3,15 @@
 export interface Inquiry {
   id: string;
   direction: "received" | "sent";
+  propertyId: string;
   propertyName: string;
   propertySlug: string;
   propertyImage: string | null;
   counterpartName: string;
   counterpartAvatar: string | null;
+  /** The other party's user id, when known — enables opening a chat. Null for
+   *  anonymous inquirers (received) or when the owner's id isn't available (sent). */
+  counterpartUserId: string | null;
   message: string;
   reply: string | null;
   status: "pending" | "replied" | "closed";
