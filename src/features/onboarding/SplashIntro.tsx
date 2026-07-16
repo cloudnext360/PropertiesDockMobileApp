@@ -6,7 +6,9 @@ import { MotiView } from "@/components/ui/moti";
 
 import { ONBOARDING_ACCENT, ONBOARDING_ACCENT_DEEP } from "./slides";
 
-const logoSource = require("../../../assets/images/splash-icon.png");
+// Same padded asset as the native splash + Android adaptive icon, so the
+// first frame lines up exactly with the native splash image.
+const logoSource = require("../../../assets/images/android-icon-foreground.png");
 const glowSource = require("../../../assets/images/logo-glow.png");
 
 /** A drifting translucent orb — pure decoration behind the logo. */
@@ -91,14 +93,15 @@ export function SplashIntro() {
           <Image source={glowSource} style={{ width: 300, height: 300 }} resizeMode="contain" />
         </MotiView>
 
-        {/* Logo — exactly screen-centered at the native splash size (76px) on the
-            first frame for a seamless handoff, then springs up */}
+        {/* Logo — exactly screen-centered at the native splash size (160px,
+            matching the plugin's imageWidth) on the first frame for a seamless
+            handoff, then springs up */}
         <MotiView
           from={{ scale: 1, translateY: 0 }}
           animate={{ scale: 1.4, translateY: -8 }}
           transition={{ type: "spring", damping: 14, stiffness: 120, delay: 150 }}
         >
-          <Image source={logoSource} style={{ width: 76, height: 76 }} resizeMode="contain" />
+          <Image source={logoSource} style={{ width: 160, height: 160 }} resizeMode="contain" />
         </MotiView>
 
         {/* Wordmark + tagline anchored below center so they never shift the logo */}
@@ -109,7 +112,7 @@ export function SplashIntro() {
             transition={{ type: "timing", duration: 550, delay: 450 }}
             className="flex-row"
           >
-            <Text className="text-4xl font-jakarta-extrabold text-white">Property</Text>
+            <Text className="text-4xl font-jakarta-extrabold text-white">Properties</Text>
             <Text className="text-4xl font-jakarta-extrabold" style={{ color: "#AEE1FF" }}>
               Dock
             </Text>

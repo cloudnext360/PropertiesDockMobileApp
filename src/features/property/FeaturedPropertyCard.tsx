@@ -1,5 +1,5 @@
 import { useRouter, type Href } from "expo-router";
-import { Bath, BedDouble, Heart, Maximize } from "lucide-react-native";
+import { Bath, BedDouble, Heart, MapPin, Maximize } from "lucide-react-native";
 import { memo } from "react";
 import { Pressable, View } from "react-native";
 
@@ -33,6 +33,8 @@ export const FeaturedPropertyCard = memo(function FeaturedPropertyCard({
   const primary = property.images.find((i) => i.isPrimary) ?? property.images[0];
   const isSale = property.listingType === "SALE";
   const location = [property.city, property.state].filter(Boolean).join(", ");
+  // Street address preferred; falls back to city/state when address is empty.
+  const addressLine = [property.address, property.city].filter(Boolean).join(", ") || location;
 
   return (
     <Pressable
@@ -89,16 +91,14 @@ export const FeaturedPropertyCard = memo(function FeaturedPropertyCard({
           {formatOmr(property.price, property.currency, property.listingType)}
         </Text>
       </View>
-      <View className="px-1">
-        <Text className="text-sm font-jakarta-bold text-muted-foreground" numberOfLines={1}>
-          {location}
+      <View className="flex-row items-center gap-1.5 px-1">
+        <MapPin size={14} color={tokens.mutedForeground} />
+        <Text className="flex-1 text-sm font-jakarta-bold text-muted-foreground" numberOfLines={1}>
+          {addressLine}
         </Text>
       </View>
       <View className="flex-row items-center justify-between gap-3 px-1">
       <View className="flex-row flex-wrap items-center gap-2 px-1">
-        {/* {location ? (
-          <SpecPill icon={<MapPin size={13} color={tokens.mutedForeground} />} label={property.city || location} />
-        ) : null} */}
         {property.bedrooms != null ? (
           <SpecPill icon={<BedDouble size={14} color={tokens.mutedForeground} />} label={`${property.bedrooms} Bed`} />
         ) : null}

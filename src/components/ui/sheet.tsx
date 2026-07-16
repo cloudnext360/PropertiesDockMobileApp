@@ -1,6 +1,7 @@
 import * as DialogPrimitive from "@rn-primitives/dialog";
-import { KeyboardAvoidingView, Platform, StyleSheet, View, type ViewProps } from "react-native";
+import { StyleSheet, View, type ViewProps } from "react-native";
 
+import { KeyboardAvoidingView } from "@/components/keyboard-avoiding-view";
 import { MotiView } from "@/components/ui/moti";
 import { cn } from "@/lib/utils";
 
@@ -19,12 +20,9 @@ export function SheetContent({
     <DialogPrimitive.Portal hostName={portalHost}>
       <DialogPrimitive.Overlay style={StyleSheet.absoluteFill} className="justify-end bg-black/50">
         {/* Keyboard avoidance must wrap the bottom-anchored card itself — padding
-            applied inside the card can't move it. Android resizes the window
-            instead (softwareKeyboardLayoutMode "resize"), so no behavior there. */}
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
-          style={styles.avoid}
-        >
+            applied inside the card can't move it. Uses the edge-to-edge-aware
+            KeyboardAvoidingView so it works on Android too. */}
+        <KeyboardAvoidingView behavior="padding" style={styles.avoid}>
           <MotiView
             from={{ translateY: 500 }}
             animate={{ translateY: 0 }}

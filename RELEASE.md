@@ -85,8 +85,8 @@ size. Replace the template placeholders:
 |---|---|---|
 | iOS + base icon | `assets/images/icon.png` | **1024×1024 PNG, no transparency, no rounded corners** (Apple rounds it). |
 | Android adaptive foreground | `assets/images/android-icon-foreground.png` | 1024×1024, logo centered in the safe ~66% (outer edges get cropped by the mask). |
-| Android adaptive background | set in `app.json` `android.adaptiveIcon.backgroundColor` (currently `#E6F4FE`) | Use the brand navy or a light tint. |
-| Splash | `assets/images/splash-icon.png` + `expo-splash-screen` plugin (bg `#208AEF`) | Center logo on a solid brand color. Add a `dark` variant for dark mode if desired. |
+| Android adaptive background | set in `app.json` `android.adaptiveIcon.backgroundColor` (currently `#208AEF`) | Use the brand navy or a light tint. |
+| Splash | `assets/images/android-icon-foreground.png` (shared with the adaptive icon) + `expo-splash-screen` plugin (bg `#208AEF`, `imageWidth` 160) | Center logo on a solid brand color. SplashIntro renders the same asset at 160×160 for a seamless handoff. Add a `dark` variant for dark mode if desired. |
 
 Source art: the web brand logos live at
 `PropertyDockFrontend/public/assets/images/logos/{blue-logo,white-logo}.png`. Brand color

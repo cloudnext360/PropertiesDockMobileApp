@@ -30,7 +30,7 @@ export function BiometricGate({ children }: { children: ReactNode }) {
     setChecking(true);
     try {
       const res = await LocalAuthentication.authenticateAsync({
-        promptMessage: "Unlock PropertyDock",
+        promptMessage: "Unlock PropertiesDock",
         fallbackLabel: "Use passcode",
       });
       if (res.success) setLocked(false);
@@ -92,7 +92,7 @@ export function BiometricGate({ children }: { children: ReactNode }) {
     return (
       <View className="flex-1 items-center justify-center gap-4 bg-background px-8">
         <Lock size={40} color={tokens.brand} />
-        <Text className="text-lg font-jakarta-bold text-foreground">PropertyDock is locked</Text>
+        <Text className="text-lg font-jakarta-bold text-foreground">PropertiesDock is locked</Text>
         <Text className="text-center text-sm text-muted-foreground">
           Unlock with Face ID / fingerprint to continue.
         </Text>

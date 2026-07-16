@@ -1,11 +1,20 @@
+import Constants from "expo-constants";
 import { useMemo, useRef, useState } from "react";
-import { StyleSheet, View } from "react-native";
+import { Platform, StyleSheet, View } from "react-native";
 import MapView, { Marker } from "react-native-maps";
 import type { Region } from "react-native-maps";
 import Supercluster from "supercluster";
 
 import { Text } from "@/components/ui";
 import type { PropertyMapProps } from "@/features/property/PropertyMap.types";
+
+// Android's Google Maps provider crashes at mount without a Maps SDK key. When
+// the key isn't configured (extra.googleMapsApiKey), render a fallback instead
+// of MapView so the screen doesn't crash. iOS uses Apple Maps (no key needed).
+const HAS_ANDROID_MAPS_KEY = Boolean(
+  (Constants.expoConfig?.extra as { googleMapsApiKey?: string } | undefined)?.googleMapsApiKey,
+);
+const MAPS_AVAILABLE = Platform.OS !== "android" || HAS_ANDROID_MAPS_KEY;
 
 // Oman (Muscat) default view.
 const OMAN_REGION: Region = {
@@ -26,7 +35,21 @@ interface PointProps {
   price: number;
 }
 
-export function PropertyMap({ properties, onSelectProperty }: PropertyMapProps) {
+export function PropertyMap(props: PropertyMapProps) {
+  // Guard in a wrapper (no hooks) so the inner component's hooks stay unconditional.
+  if (!MAPS_AVAILABLE) {
+    return (
+      <View className="flex-1 items-center justify-center bg-muted px-8">
+        <Text className="text-center text-sm text-muted-foreground">
+          Map isn&apos;t available in this build.
+        </Text>
+      </View>
+    );
+  }
+  return <PropertyMapView {...props} />;
+}
+
+function PropertyMapView({ properties, onSelectProperty }: PropertyMapProps) {
   const mapRef = useRef<MapView>(null);
 
   const withCoords = useMemo(

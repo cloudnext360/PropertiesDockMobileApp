@@ -2,7 +2,9 @@ import { useHeaderHeight } from "@react-navigation/elements";
 import { useRouter } from "expo-router";
 import { Check } from "lucide-react-native";
 import { useState } from "react";
-import { KeyboardAvoidingView, Platform, ScrollView, View } from "react-native";
+import { ScrollView, View } from "react-native";
+
+import { KeyboardAvoidingView } from "@/components/keyboard-avoiding-view";
 import { toast } from "sonner-native";
 
 import { Button, Text } from "@/components/ui";
@@ -141,7 +143,7 @@ export function ListPropertyWizard() {
   return (
     <KeyboardAvoidingView
       className="flex-1 bg-white dark:bg-background"
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      behavior="padding"
       keyboardVerticalOffset={headerHeight}
     >
       <View className="flex-1 px-4 pt-3">

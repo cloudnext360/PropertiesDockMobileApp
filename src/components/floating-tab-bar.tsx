@@ -77,8 +77,11 @@ export function FloatingTabBar({ state, descriptors, navigation }: FloatingTabBa
               className="h-12 w-12 items-center justify-center active:opacity-70"
             >
               <View
+                // Explicit 24px radius (half of 48) — `rounded-full` (9999) can
+                // render as a rectangle on Android. overflow-hidden guarantees the clip.
+                style={{ borderRadius: 24, overflow: "hidden" }}
                 className={cn(
-                  "h-12 w-12 items-center justify-center rounded-full",
+                  "h-12 w-12 items-center justify-center",
                   focused && "bg-brand",
                 )}
               >

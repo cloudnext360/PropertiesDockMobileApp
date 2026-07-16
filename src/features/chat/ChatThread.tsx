@@ -3,9 +3,10 @@ import { useIsFocused } from "@react-navigation/native";
 import { useFocusEffect, useRouter, type Href } from "expo-router";
 import { Building2, ChevronLeft } from "lucide-react-native";
 import { useCallback, useEffect, useMemo, useRef } from "react";
-import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, View } from "react-native";
+import { ActivityIndicator, Pressable, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { KeyboardAvoidingView } from "@/components/keyboard-avoiding-view";
 import { Avatar, AvatarFallback, AvatarImage, Button, Text } from "@/components/ui";
 import { useAuth } from "@/context/AuthContext";
 import { setActiveConversation } from "@/features/notifications/push";
@@ -219,10 +220,7 @@ export function ChatThread({ id }: { id: string }) {
         ) : null}
       </View>
 
-      <KeyboardAvoidingView
-        className="flex-1"
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-      >
+      <KeyboardAvoidingView className="flex-1" behavior="padding">
         <View className="flex-1">
           {isLoading ? (
             <View className="flex-1 items-center justify-center">

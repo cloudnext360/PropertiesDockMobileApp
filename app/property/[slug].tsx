@@ -24,7 +24,8 @@ import { MessageButton } from "@/features/chat/MessageButton";
 import { FullscreenGallery } from "@/features/property/FullscreenGallery";
 import { ImageCarousel } from "@/features/property/ImageCarousel";
 import { InquiryForm } from "@/features/property/InquiryForm";
-import { PropertyMap } from "@/features/property/PropertyMap";
+// MAP DISABLED for now — re-enable this import together with the mini-map block below.
+// import { PropertyMap } from "@/features/property/PropertyMap";
 import { useAuth } from "@/context/AuthContext";
 import { usePropertyBySlug } from "@/hooks/usePropertyBySlug";
 import { useSavedProperties, useToggleSaveProperty } from "@/hooks/useSavedProperties";
@@ -84,7 +85,8 @@ export default function PropertyDetailScreen() {
 
   const images = property.images.map((i) => i.url);
   const isSaved = savedMap.has(property.id);
-  const hasCoords = typeof property.latitude === "number" && typeof property.longitude === "number";
+  // MAP DISABLED for now — re-enable with the mini-map block below.
+  // const hasCoords = typeof property.latitude === "number" && typeof property.longitude === "number";
   const owner = property.agencyMember ?? property.generalUser;
   const ownerUser = owner?.user;
   const ownerName = ownerUser ? `${ownerUser.firstName} ${ownerUser.lastName}`.trim() : "Owner";
@@ -167,12 +169,14 @@ export default function PropertyDetailScreen() {
             {property.yearBuilt != null ? <Spec icon={<CalendarDays size={18} color={tokens.brand} />} label={`Built ${property.yearBuilt}`} /> : null}
           </View>
 
-          {/* Mini map */}
+          {/* Mini map — MAP DISABLED for now. To re-enable: uncomment the PropertyMap
+              import and `hasCoords` above, then uncomment this block.
           {hasCoords ? (
             <View className="h-44 overflow-hidden rounded-xl border border-border">
               <PropertyMap properties={[property as ApiProperty]} />
             </View>
           ) : null}
+          */}
 
           {/* Description */}
           {property.description ? (

@@ -1,6 +1,7 @@
 import { FlashList } from "@shopify/flash-list";
 import { useRouter } from "expo-router";
-import { ChevronLeft, List, MapPin, Search, SlidersHorizontal } from "lucide-react-native";
+// MAP DISABLED — re-add `List, MapPin` when restoring the list/map toggle.
+import { ChevronLeft, Search, SlidersHorizontal } from "lucide-react-native";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Pressable, RefreshControl, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -10,12 +11,13 @@ import { Button, Skeleton, Text } from "@/components/ui";
 import { CategoryChips, categoryFilter } from "@/features/property/CategoryChips";
 import { FeaturedPropertyCard } from "@/features/property/FeaturedPropertyCard";
 import { FilterSheet, type PropertyFilterValues } from "@/features/property/FilterSheet";
-import { PropertyCard } from "@/features/property/PropertyCard";
-import { PropertyMap } from "@/features/property/PropertyMap";
+// MAP DISABLED — re-enable these with the map view + toggle below.
+// import { PropertyCard } from "@/features/property/PropertyCard";
+// import { PropertyMap } from "@/features/property/PropertyMap";
+// import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
 import { useInfiniteProperties } from "@/hooks/useInfiniteProperties";
 import { useSavedProperties, useToggleSaveProperty } from "@/hooks/useSavedProperties";
-import { cn } from "@/lib/utils";
 import { useThemeTokens } from "@/theme/theme-provider";
 import type { ApiProperty } from "@/types/api";
 
@@ -39,8 +41,9 @@ export default function SearchScreen() {
   const [category, setCategory] = useState("all");
   const [filters, setFilters] = useState<PropertyFilterValues>({});
   const [filterOpen, setFilterOpen] = useState(false);
-  const [view, setView] = useState<"list" | "map">("list");
-  const [selected, setSelected] = useState<ApiProperty | null>(null);
+  // MAP DISABLED — re-enable these with the map view + toggle below.
+  // const [view, setView] = useState<"list" | "map">("list");
+  // const [selected, setSelected] = useState<ApiProperty | null>(null);
 
   // Debounce the search box into the query.
   useEffect(() => {
@@ -151,6 +154,7 @@ export default function SearchScreen() {
           <CategoryChips selected={category} onSelect={setCategory} />
         </View>
 
+        {/* MAP DISABLED — list/map toggle hidden. Re-enable with the map view + state + imports.
         <View className="mt-3 flex-row items-center justify-between px-4">
           <View className="flex-row overflow-hidden rounded-full border border-border">
             <Segment
@@ -167,9 +171,13 @@ export default function SearchScreen() {
             />
           </View>
         </View>
+        */}
       </View>
 
       {/* Body */}
+      {/* MAP DISABLED — map view removed from the body. To re-enable, restore the toggle,
+          the view/selected state, the PropertyMap/PropertyCard imports, and re-add this
+          branch as the first arm of the ternary below (before the isLoading check):
       {view === "map" ? (
         <View className="mt-3 flex-1">
           <PropertyMap properties={items} onSelectProperty={setSelected} />
@@ -189,7 +197,9 @@ export default function SearchScreen() {
             </View>
           ) : null}
         </View>
-      ) : isLoading ? (
+      ) : ...}
+      */}
+      {isLoading ? (
         <LoadingList />
       ) : isError ? (
         <ErrorState onRetry={() => refetch()} />
@@ -238,36 +248,38 @@ export default function SearchScreen() {
   );
 }
 
-function Segment({
-  icon,
-  label,
-  active,
-  onPress,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  active: boolean;
-  onPress: () => void;
-}) {
-  return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityState={{ selected: active }}
-      className={cn("h-9 flex-row items-center gap-1.5 px-4", active ? "bg-brand" : "bg-card")}
-    >
-      {icon}
-      <Text
-        className={cn(
-          "text-sm font-jakarta-semibold",
-          active ? "text-brand-foreground" : "text-foreground",
-        )}
-      >
-        {label}
-      </Text>
-    </Pressable>
-  );
-}
+// MAP DISABLED — Segment powered the list/map toggle. Re-enable with the map view
+// (and re-add the `cn` import at the top).
+// function Segment({
+//   icon,
+//   label,
+//   active,
+//   onPress,
+// }: {
+//   icon: React.ReactNode;
+//   label: string;
+//   active: boolean;
+//   onPress: () => void;
+// }) {
+//   return (
+//     <Pressable
+//       onPress={onPress}
+//       accessibilityRole="button"
+//       accessibilityState={{ selected: active }}
+//       className={cn("h-9 flex-row items-center gap-1.5 px-4", active ? "bg-brand" : "bg-card")}
+//     >
+//       {icon}
+//       <Text
+//         className={cn(
+//           "text-sm font-jakarta-semibold",
+//           active ? "text-brand-foreground" : "text-foreground",
+//         )}
+//       >
+//         {label}
+//       </Text>
+//     </Pressable>
+//   );
+// }
 
 function LoadingList() {
   return (

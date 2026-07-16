@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import {
   ArrowLeft,
   CheckCircle2,
@@ -8,9 +8,11 @@ import {
   MailWarning,
   ShieldCheck,
 } from "lucide-react-native";
-import { useState } from "react";
-import { Controller, useForm, useWatch } from "react-hook-form";
-import { KeyboardAvoidingView, Platform, Pressable, TextInput, View } from "react-native";
+import { useCallback, useState } from "react";
+import { Controller, useForm } from "react-hook-form";
+import { BackHandler, Keyboard, Platform, Pressable, TextInput, View } from "react-native";
+
+import { KeyboardAvoidingView } from "@/components/keyboard-avoiding-view";
 
 import { Screen } from "@/components/screen";
 import { Button, Input, Label, Text } from "@/components/ui";
@@ -152,6 +154,30 @@ export function AuthScreen() {
   const [challengeToken, setChallengeToken] = useState<string | null>(null);
   const [twoFactorCode, setTwoFactorCode] = useState("");
 
+  // Android hardware back. AuthGate lands here via replace(), leaving auth as
+  // the only route in the stack — default back would exit the app. Pop when
+  // there is history; otherwise go Home. On the 2FA step, back returns to the
+  // sign-in form (mirrors the "Back to sign in" button).
+  useFocusEffect(
+    useCallback(() => {
+      if (Platform.OS !== "android") return;
+
+      const onBackPress = () => {
+        if (challengeToken) {
+          setChallengeToken(null);
+          setServerError("");
+          return true;
+        }
+        if (router.canGoBack()) return false;
+        router.replace("/(tabs)");
+        return true;
+      };
+
+      const sub = BackHandler.addEventListener("hardwareBackPress", onBackPress);
+      return () => sub.remove();
+    }, [challengeToken, router]),
+  );
+
   const signinForm = useForm<LoginForm>({
     resolver: zodResolver(LoginSchema),
     defaultValues: { email: "", password: "" },
@@ -160,7 +186,6 @@ export function AuthScreen() {
     resolver: zodResolver(RegisterSchema),
     defaultValues: { firstName: "", lastName: "", email: "", password: "", phone: "" },
   });
-  const signupPassword = useWatch({ control: signupForm.control, name: "password" }) ?? "";
 
   function resetFeedback() {
     setServerError("");
@@ -320,17 +345,20 @@ export function AuthScreen() {
 
   return (
     <Screen scroll contentClassName="px-6 py-4">
-      <KeyboardAvoidingView
-        className="flex-1"
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-      >
+      <KeyboardAvoidingView className="flex-1" behavior="padding">
         <Pressable
-          onPress={() => router.replace("/(tabs)")}
+          onPress={() => {
+            // dismissTo pops back to the still-mounted tab shell when it's in
+            // history (push from Saved/chat) — replace() remounted the whole
+            // shell, which lagged. Falls back to replace on cold entry (AuthGate).
+            Keyboard.dismiss();
+            router.dismissTo("/(tabs)");
+          }}
           accessibilityRole="button"
           className="mb-6 flex-row items-center gap-2 self-start py-2"
         >
-          <ArrowLeft size={16} color={tokens.mutedForeground} />
-          <Text className="text-sm text-muted-foreground">Back to home</Text>
+          <ArrowLeft size={18} color={tokens.mutedForeground} />
+          <Text className="text-sm font-jakarta-bold text-muted-foreground">Back to home</Text>
         </Pressable>
 
         <View className="mx-auto w-full max-w-md flex-1 justify-center pb-10">
@@ -343,7 +371,7 @@ export function AuthScreen() {
           <Text className="mb-6 mt-1 text-sm text-muted-foreground">
             {mode === "signin"
               ? "Sign in to manage your properties, saved homes and inquiries."
-              : "Join PropertyDock to list properties, save homes and send inquiries."}
+              : "Join PropertiesDock to list properties, save homes and send inquiries."}
           </Text>
 
           {/* Server error (web AuthFeedback) */}
@@ -399,7 +427,12 @@ export function AuthScreen() {
 
           {mode === "signin" ? (
             // ── Sign in ──
-            <View className="gap-4">
+            // key: force a full remount when switching modes. Without keys React
+            // matches these branches by position and REUSES same-type children —
+            // e.g. sign-in Password's Controller became sign-up Email's Controller
+            // with control/name swapped, leaving a stale value subscription that
+            // wiped the email text on every keystroke.
+            <View key="signin" className="gap-4">
               <Field label="Email" error={signinForm.formState.errors.email?.message}>
                 <Controller
                   control={signinForm.control}
@@ -408,7 +441,6 @@ export function AuthScreen() {
                     <Input
                       placeholder="you@example.com"
                       autoCapitalize="none"
-                      autoComplete="email"
                       keyboardType="email-address"
                       value={field.value}
                       onChangeText={field.onChange}
@@ -433,7 +465,7 @@ export function AuthScreen() {
             </View>
           ) : (
             // ── Sign up ──
-            <View className="gap-4">
+            <View key="signup" className="gap-4">
               <View className="flex-row gap-3">
                 <View className="flex-1">
                   <Field label="First name" error={signupForm.formState.errors.firstName?.message}>
@@ -443,7 +475,6 @@ export function AuthScreen() {
                       render={({ field }) => (
                         <Input
                           placeholder="First name"
-                          autoComplete="given-name"
                           value={field.value}
                           onChangeText={field.onChange}
                         />
@@ -459,7 +490,6 @@ export function AuthScreen() {
                       render={({ field }) => (
                         <Input
                           placeholder="Last name"
-                          autoComplete="family-name"
                           value={field.value}
                           onChangeText={field.onChange}
                         />
@@ -475,9 +505,10 @@ export function AuthScreen() {
                   name="email"
                   render={({ field }) => (
                     <Input
-                      placeholder="you@example.com"
+                      // "(v3)" is a TEMP canary to prove the device runs current code —
+                      // remove once the clear-on-type bug is resolved.
+                      placeholder="you@example.com (v3)"
                       autoCapitalize="none"
-                      autoComplete="email"
                       keyboardType="email-address"
                       value={field.value}
                       onChangeText={field.onChange}
@@ -493,7 +524,6 @@ export function AuthScreen() {
                   render={({ field }) => (
                     <Input
                       placeholder={PHONE_PLACEHOLDER}
-                      autoComplete="tel"
                       keyboardType="phone-pad"
                       value={field.value}
                       onChangeText={field.onChange}
@@ -507,22 +537,26 @@ export function AuthScreen() {
                   control={signupForm.control}
                   name="password"
                   render={({ field }) => (
-                    <PasswordInput
-                      value={field.value}
-                      onChangeText={field.onChange}
-                      placeholder="Min 8 chars, 1 uppercase, 1 number"
-                    />
+                    // Read the value here (inside the field) instead of a top-level
+                    // useWatch — the top-level subscription re-rendered the whole form
+                    // and reset the other controlled inputs as you typed.
+                    <View className="gap-1.5">
+                      <PasswordInput
+                        value={field.value}
+                        onChangeText={field.onChange}
+                        placeholder="Min 8 chars, 1 uppercase, 1 number"
+                      />
+                      {field.value.length > 0 ? (
+                        <View className="gap-0.5 pl-1">
+                          <PasswordHint ok={field.value.length >= 8} label="At least 8 characters" />
+                          <PasswordHint ok={/[A-Z]/.test(field.value)} label="One uppercase letter" />
+                          <PasswordHint ok={/[0-9]/.test(field.value)} label="One number" />
+                        </View>
+                      ) : null}
+                    </View>
                   )}
                 />
               </Field>
-
-              {signupPassword.length > 0 ? (
-                <View className="-mt-2 gap-0.5 pl-1">
-                  <PasswordHint ok={signupPassword.length >= 8} label="At least 8 characters" />
-                  <PasswordHint ok={/[A-Z]/.test(signupPassword)} label="One uppercase letter" />
-                  <PasswordHint ok={/[0-9]/.test(signupPassword)} label="One number" />
-                </View>
-              ) : null}
 
               <Button variant="brand" className="mt-2" loading={isSubmitting} onPress={onSignUp}>
                 Create account
