@@ -12,7 +12,12 @@ import { AppState } from "react-native";
 import { useAuth } from "@/context/AuthContext";
 import { getAccessToken } from "@/lib/storage";
 
-import { connectChatSocket, disconnectChatSocket, getChatSocket } from "./socket";
+import {
+  connectChatSocket,
+  disconnectChatSocket,
+  getChatSocket,
+  setSocketUserId,
+} from "./socket";
 
 type ChatSocketContextValue = {
   /** True while the socket has a live connection. */
@@ -34,10 +39,14 @@ export function ChatSocketProvider({ children }: { children: ReactNode }) {
   // Connect/disconnect with the auth session.
   useEffect(() => {
     if (!user) {
+      setSocketUserId(null);
       disconnectChatSocket();
       setConnected(false);
       return;
     }
+
+    // Let the socket layer attribute receipts to the right participant.
+    setSocketUserId(user.userId);
 
     let cancelled = false;
     let detach: (() => void) | undefined;

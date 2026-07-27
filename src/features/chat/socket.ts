@@ -19,7 +19,28 @@ export type ConversationUpdatedPayload = {
   senderId: string;
 };
 
+/** Backend `conversation:read` — the other participant caught up to `readAt`. */
+export type ConversationReadPayload = {
+  conversationId: string;
+  userId: string;
+  readAt: string;
+};
+
+/** Backend `conversation:delivered` — the other participant's device received up to `deliveredAt`. */
+export type ConversationDeliveredPayload = {
+  conversationId: string;
+  userId: string;
+  deliveredAt: string;
+};
+
 let socket: Socket | null = null;
+
+// The signed-in user's id — set by the socket provider. Lets us tell our own
+// activity apart from the other participant's when patching receipts.
+let myUserId: string | null = null;
+export function setSocketUserId(id: string | null): void {
+  myUserId = id;
+}
 
 export function getChatSocket(): Socket | null {
   return socket;
@@ -58,8 +79,22 @@ function upsertIncomingMessage(msg: Message): void {
   });
 }
 
+/** Patch one conversation's receipt timestamps in the list cache (drives ticks). */
+function patchConversationReceipt(
+  conversationId: string,
+  patch: Partial<Pick<Conversation, "otherReadAt" | "otherDeliveredAt">>,
+): void {
+  queryClient.setQueryData<Conversation[]>(queryKeys.chatConversations(), (old) =>
+    old ? old.map((c) => (c.id === conversationId ? { ...c, ...patch } : c)) : old,
+  );
+}
+
 /** Patch the conversation list + tab badge from a `conversation:updated` event. */
 function applyConversationUpdated(p: ConversationUpdatedPayload): void {
+  // If this arrived because the OTHER participant sent a message, my device now
+  // has it → ack delivery so their bubble flips to a double tick.
+  if (myUserId && p.senderId !== myUserId) socket?.emit("message:delivered", p.conversationId);
+
   const listKey = queryKeys.chatConversations();
   let found = false;
 
@@ -127,6 +162,17 @@ export function connectChatSocket(token: string): Socket {
   socket.on("conversation:updated", (p: ConversationUpdatedPayload) =>
     applyConversationUpdated(p),
   );
+
+  // Receipts for MY sent messages — the other participant read or received them.
+  // Read implies delivered, so a read also advances the delivered timestamp.
+  socket.on("conversation:read", (p: ConversationReadPayload) => {
+    if (myUserId && p.userId === myUserId) return;
+    patchConversationReceipt(p.conversationId, { otherReadAt: p.readAt, otherDeliveredAt: p.readAt });
+  });
+  socket.on("conversation:delivered", (p: ConversationDeliveredPayload) => {
+    if (myUserId && p.userId === myUserId) return;
+    patchConversationReceipt(p.conversationId, { otherDeliveredAt: p.deliveredAt });
+  });
 
   return socket;
 }

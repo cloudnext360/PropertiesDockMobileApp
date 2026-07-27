@@ -1,7 +1,8 @@
 /**
- * Compact timestamp for the conversation list — "now", "5m", "3h", "Yesterday",
- * a weekday within the last week, else a short date. Deliberately terser than
- * the shared `timeAgo` ("5 minutes ago"), which suits detail views not a list.
+ * Compact timestamp for the conversation list — the clock time ("3:07 PM") for
+ * chats received today, "Yesterday", a weekday within the last week, else a
+ * short date. Shows the actual received time rather than a relative "now/5m/3h",
+ * matching the familiar messaging-app list style.
  */
 export function formatConversationTime(iso: string | null | undefined): string {
   if (!iso) return "";
@@ -10,16 +11,12 @@ export function formatConversationTime(iso: string | null | undefined): string {
   if (Number.isNaN(ms)) return "";
 
   const now = new Date();
-  const diffSec = Math.max(0, Math.floor((now.getTime() - ms) / 1000));
-
-  if (diffSec < 60) return "now";
-  if (diffSec < 3600) return `${Math.floor(diffSec / 60)}m`;
-
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
   const startOfThen = new Date(then.getFullYear(), then.getMonth(), then.getDate()).getTime();
   const dayDiff = Math.round((startOfToday - startOfThen) / 86_400_000);
 
-  if (dayDiff <= 0) return `${Math.floor(diffSec / 3600)}h`;
+  // Today → the actual clock time it was received, e.g. "3:07 PM".
+  if (dayDiff <= 0) return then.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
   if (dayDiff === 1) return "Yesterday";
   if (dayDiff < 7) return then.toLocaleDateString(undefined, { weekday: "short" });
 

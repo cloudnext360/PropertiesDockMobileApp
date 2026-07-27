@@ -141,6 +141,7 @@ function Body({
       data={items}
       keyExtractor={(c) => c.id}
       renderItem={({ item }) => <ConversationRow conversation={item} onPress={onOpen} />}
+      ItemSeparatorComponent={() => <View className="h-px bg-border" />}
       onRefresh={onRetry}
       refreshing={isRefetching}
       contentContainerStyle={{ paddingVertical: 4 }}

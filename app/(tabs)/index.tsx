@@ -1,11 +1,12 @@
 import { useRouter } from "expo-router";
-import { Bell, ChevronDown, MapPin, Search } from "lucide-react-native";
+import { ChevronDown, MapPin, Search } from "lucide-react-native";
 import { useCallback, useMemo, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { toast } from "sonner-native";
 
 import { FadeInView, Skeleton, Text } from "@/components/ui";
+import { NotificationBell } from "@/features/notifications/NotificationBell";
 import { CategoryChips, categoryFilter } from "@/features/property/CategoryChips";
 import { FeaturedPropertyCard } from "@/features/property/FeaturedPropertyCard";
 import { useAuth } from "@/context/AuthContext";
@@ -66,14 +67,10 @@ export default function HomeScreen() {
             <MapPin size={18} color={tokens.brand} />
             <Text className="text-base font-jakarta-semibold text-foreground">Muscat</Text>
           </View>
-          <Pressable
-            onPress={() => toast("You're all caught up")}
-            accessibilityRole="button"
-            accessibilityLabel="Notifications"
-            className="h-11 w-11 items-center justify-center rounded-full bg-card active:bg-muted"
-          >
-            <Bell size={20} color={tokens.foreground} />
-          </Pressable>
+          <View className="flex-row items-center gap-2">
+
+          <NotificationBell />
+          </View>
         </View>
       </View>
 

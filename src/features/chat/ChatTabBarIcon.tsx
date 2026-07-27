@@ -2,6 +2,7 @@ import { MessageCircle } from "lucide-react-native";
 import { View } from "react-native";
 
 import { Text } from "@/components/ui";
+import { useThemeTokens } from "@/theme/theme-provider";
 
 import { useUnreadCount } from "./hooks";
 
@@ -12,6 +13,7 @@ import { useUnreadCount } from "./hooks";
  */
 export function ChatTabBarIcon({ color, size }: { color: string; size: number }) {
   const { data: count = 0 } = useUnreadCount();
+  const tokens = useThemeTokens();
 
   return (
     <View style={{ width: size, height: size }}>
@@ -19,9 +21,14 @@ export function ChatTabBarIcon({ color, size }: { color: string; size: number })
       {count > 0 ? (
         <View
           className="absolute -right-2 -top-1.5 h-4 min-w-4 items-center justify-center rounded-full bg-brand px-1"
-          style={{ borderWidth: 1.5, borderColor: "transparent" }}
+          style={{ borderWidth: 1.5, borderColor: tokens.card }}
         >
-          <Text className="text-brand-foreground text-[10px] font-jakarta-bold">
+          <Text
+            className="text-brand-foreground text-[10px] font-jakarta-bold"
+            // includeFontPadding:false + matched lineHeight vertically center the
+            // tiny glyph in the 16px badge (Android adds font padding otherwise).
+            style={{ includeFontPadding: false, textAlign: "center", lineHeight: 12 }}
+          >
             {count > 9 ? "9+" : count}
           </Text>
         </View>

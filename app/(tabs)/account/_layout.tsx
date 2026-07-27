@@ -25,11 +25,14 @@ export default function AccountStackLayout() {
           headerTitleStyle: { fontFamily: "PlusJakartaSans_600SemiBold" },
         }}
       >
-        <Stack.Screen name="index" options={{ headerShown: false }} />
-        <Stack.Screen name="listings" options={{ headerShown: false }} />
-        <Stack.Screen name="inquiries" options={{ headerShown: false }} />
-        <Stack.Screen name="saved-properties" options={{ headerShown: false }} />
-        <Stack.Screen name="settings" options={{ headerShown: false }} />
+        {/* The four dashboard tabs share identical chrome (AccountShell). Disabling
+            the transition makes switching between them read as only the inner
+            content changing, not a full-screen slide. */}
+        <Stack.Screen name="index" options={{ headerShown: false, animation: "none" }} />
+        <Stack.Screen name="listings" options={{ headerShown: false, animation: "none" }} />
+        <Stack.Screen name="inquiries" options={{ headerShown: false, animation: "none" }} />
+        <Stack.Screen name="saved-properties" options={{ headerShown: false, animation: "none" }} />
+        <Stack.Screen name="settings" options={{ headerShown: false, animation: "none" }} />
         <Stack.Screen name="edit" options={{ title: "Edit Profile" }} />
         <Stack.Screen name="profile" options={{ title: "Profile" }} />
       </Stack>

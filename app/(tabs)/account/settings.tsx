@@ -1,14 +1,10 @@
-import { Placeholder } from "@/components/placeholder";
 import { AccountShell } from "@/features/account/AccountShell";
+import { SettingsPanel } from "@/features/account/SettingsPanel";
 
 export default function SettingsScreen() {
   return (
     <AccountShell active="settings">
-      <Placeholder
-        title="Settings"
-        subtitle="Preferences, notifications, password & security."
-        endpoint="GET/PUT /api/users/settings"
-      />
+      <SettingsPanel />
     </AccountShell>
   );
 }

@@ -1,13 +1,14 @@
 import { FlashList } from "@shopify/flash-list";
 import { useIsFocused } from "@react-navigation/native";
 import { useFocusEffect, useRouter, type Href } from "expo-router";
-import { Building2, ChevronLeft } from "lucide-react-native";
+import { ChevronLeft, ChevronRight } from "lucide-react-native";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { ActivityIndicator, Pressable, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { KeyboardAvoidingView } from "@/components/keyboard-avoiding-view";
-import { Avatar, AvatarFallback, AvatarImage, Button, Text } from "@/components/ui";
+import { AppImage, Avatar, AvatarFallback, AvatarImage, Button, Text } from "@/components/ui";
+import { formatOmr } from "@/constants/locale";
 import { useAuth } from "@/context/AuthContext";
 import { setActiveConversation } from "@/features/notifications/push";
 import { useThemeTokens } from "@/theme/theme-provider";
@@ -17,7 +18,7 @@ import { Composer } from "./Composer";
 import { formatDayLabel, isSameDay } from "./format";
 import { newClientId, useConversations, useMarkRead, useMessages, useSendMessage } from "./hooks";
 import { MessageBubble } from "./MessageBubble";
-import type { ChatMessage } from "./schemas";
+import type { ChatMessage, MessageReceipt } from "./schemas";
 import { TypingIndicator } from "./TypingIndicator";
 
 // Messages within this window from the same sender render as one grouped stack.
@@ -33,6 +34,7 @@ type Row =
       groupedWithOlder: boolean;
       groupedWithNewer: boolean;
       showTimestamp: boolean;
+      receipt?: MessageReceipt;
     };
 
 function initialsOf(firstName?: string, lastName?: string): string {
@@ -68,6 +70,11 @@ export function ChatThread({ id }: { id: string }) {
   // `inverted`; instead the list renders normally and pins to the bottom via
   // maintainVisibleContentPosition, so index 0 (oldest) sits at the top and the
   // newest message sits at the bottom. Day separators land above each day's block.
+  const otherReadMs = conversation?.otherReadAt ? new Date(conversation.otherReadAt).getTime() : 0;
+  const otherDeliveredMs = conversation?.otherDeliveredAt
+    ? new Date(conversation.otherDeliveredAt).getTime()
+    : 0;
+
   const rows = useMemo<Row[]>(() => {
     const chron = messages.slice().reverse();
     const out: Row[] = [];
@@ -91,18 +98,28 @@ export function ChatThread({ id }: { id: string }) {
         next.senderId === cur.senderId &&
         new Date(next.createdAt).getTime() - curTime <= GROUP_WINDOW_MS;
 
+      const isMine = cur.senderId === myId;
+      // Ticks only for my own, server-confirmed messages (optimistic ones still
+      // carry a clientId and show "Sending…"). Compare against the other side's
+      // read/delivered marks: read → green double, delivered → double, else single.
+      let receipt: MessageReceipt | undefined;
+      if (isMine && !cur.clientId) {
+        receipt = curTime <= otherReadMs ? "read" : curTime <= otherDeliveredMs ? "delivered" : "sent";
+      }
+
       out.push({
         type: "msg",
         id: cur.id,
         message: cur,
-        isMine: cur.senderId === myId,
+        isMine,
         groupedWithOlder,
         groupedWithNewer,
         showTimestamp: !groupedWithNewer,
+        receipt,
       });
     }
     return out;
-  }, [messages, myId]);
+  }, [messages, myId, otherReadMs, otherDeliveredMs]);
 
   // Mark read on focus and whenever the newest message from the other side lands.
   const markReadRef = useRef(markRead);
@@ -165,6 +182,7 @@ export function ChatThread({ id }: { id: string }) {
           groupedWithOlder={item.groupedWithOlder}
           groupedWithNewer={item.groupedWithNewer}
           showTimestamp={item.showTimestamp}
+          receipt={item.receipt}
           onRetry={handleRetry}
         />
       );
@@ -210,12 +228,25 @@ export function ChatThread({ id }: { id: string }) {
                 params: { slug: property.slug },
               } as unknown as Href)
             }
-            className="flex-row items-center gap-1.5 border-t border-border px-3 py-1.5 active:bg-muted"
+            className="flex-row items-center gap-3 border-t border-border px-3 py-2.5 active:bg-muted"
           >
-            <Building2 size={13} color={tokens.mutedForeground} />
-            <Text numberOfLines={1} className="flex-1 text-xs text-muted-foreground">
-              {property.propertyName}
-            </Text>
+            <View className="h-12 w-12 overflow-hidden rounded-lg bg-muted">
+              <AppImage
+                source={property.image ? { uri: property.image } : undefined}
+                style={{ width: "100%", height: "100%" }}
+                contentFit="cover"
+                recyclingKey={property.id}
+              />
+            </View>
+            <View className="flex-1">
+              <Text numberOfLines={1} className="text-sm font-jakarta-extrabold text-brand">
+                {formatOmr(property.price, property.currency, property.listingType)}
+              </Text>
+              <Text numberOfLines={1} className="text-xs font-jakarta-medium text-foreground">
+                {property.propertyName}
+              </Text>
+            </View>
+            <ChevronRight size={18} color={tokens.mutedForeground} />
           </Pressable>
         ) : null}
       </View>

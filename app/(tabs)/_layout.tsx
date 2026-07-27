@@ -1,5 +1,5 @@
 import { Tabs } from "expo-router";
-import { FileText, Heart, House, User } from "lucide-react-native";
+import { FileText, Heart, House, Plus, PlusCircle, User } from "lucide-react-native";
 
 import { FloatingTabBar, type FloatingTabBarProps } from "@/components/floating-tab-bar";
 import { ChatTabBarIcon } from "@/features/chat/ChatTabBarIcon";
@@ -22,10 +22,7 @@ export default function TabsLayout() {
 
   return (
     <Tabs
-      // Hardware back walks back through previously visited tabs (deduped)
-      // instead of exiting immediately; useDoubleBackExit owns the final exit.
       backBehavior="history"
-      // props are BottomTabBarProps; FloatingTabBarProps is a structural subset.
       tabBar={(props) => <FloatingTabBar {...(props as unknown as FloatingTabBarProps)} />}
       screenOptions={{
         headerStyle: { backgroundColor: tokens.card },
@@ -54,7 +51,7 @@ export default function TabsLayout() {
         name="sell"
         options={{
           title: "Sell",
-          tabBarIcon: ({ color, size }) => <FileText color={color} size={size} />,
+          tabBarIcon: ({ color, size }) => <PlusCircle color={color} size={size} />,
         }}
       />
       <Tabs.Screen
@@ -68,7 +65,7 @@ export default function TabsLayout() {
         name="account"
         options={{
           title: "Account",
-          headerShown: false, // the nested Account stack renders its own headers
+          // headerShown: false, // the nested Account stack renders its own headers
           tabBarIcon: ({ color, size }) => <User color={color} size={size} />,
         }}
       />

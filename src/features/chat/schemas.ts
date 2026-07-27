@@ -17,6 +17,9 @@ export const ChatPropertyRefSchema = z.object({
   id: z.string(),
   propertyName: z.string(),
   slug: z.string(),
+  price: z.number(),
+  currency: z.string(),
+  listingType: z.enum(["SALE", "RENT"]),
   image: z.string().nullable(),
 });
 
@@ -26,6 +29,10 @@ export const ConversationSchema = z.object({
   lastMessageAt: z.string(),
   lastMessagePreview: z.string().nullable(),
   unreadCount: z.number(),
+  // The other participant's receipt timestamps — drive my message ticks.
+  // Nullish for tolerance if an older backend omits them.
+  otherDeliveredAt: z.string().nullish(),
+  otherReadAt: z.string().nullish(),
   otherParticipant: ChatParticipantSchema.nullable(),
   property: ChatPropertyRefSchema.nullable(),
 });
@@ -52,6 +59,13 @@ export type MessagesPage = z.infer<typeof MessagesPageSchema>;
 
 /** Client-side delivery state for optimistic messages (never sent by the server). */
 export type MessageStatus = "sending" | "sent" | "failed";
+
+/**
+ * Read-receipt state for one of MY sent messages, derived from the other
+ * participant's timestamps: "sent" (single tick) → "delivered" (double tick) →
+ * "read" (green double tick).
+ */
+export type MessageReceipt = "sent" | "delivered" | "read";
 
 /**
  * A message as held in the cache: a server `Message`, optionally augmented with

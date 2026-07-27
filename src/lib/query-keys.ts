@@ -19,4 +19,7 @@ export const queryKeys = {
   chatConversations: () => ["chat", "conversations"] as const,
   chatMessages: (conversationId: string) => ["chat", "messages", conversationId] as const,
   chatUnreadCount: () => ["chat", "unread-count"] as const,
+  notifications: () => ["notifications", "list"] as const,
+  notificationsUnreadCount: () => ["notifications", "unread-count"] as const,
+  userSettings: () => ["user-settings"] as const,
 };

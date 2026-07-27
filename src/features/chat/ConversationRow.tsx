@@ -32,7 +32,10 @@ export const ConversationRow = memo(function ConversationRow({
   return (
     <Pressable
       onPress={() => onPress(conversation)}
-      className="flex-row items-center gap-3 px-4 py-3 active:bg-muted/40"
+      className={cn(
+        "flex-row items-center gap-3 px-4 py-3 active:bg-muted/40",
+        unread && "bg-brand/5 dark:bg-brand/10",
+      )}
       accessibilityRole="button"
       accessibilityLabel={`Chat with ${name}`}
     >

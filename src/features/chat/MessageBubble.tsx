@@ -1,4 +1,4 @@
-import { AlertCircle } from "lucide-react-native";
+import { AlertCircle, Check, CheckCheck } from "lucide-react-native";
 import { memo } from "react";
 import { Pressable, View } from "react-native";
 
@@ -7,7 +7,11 @@ import { cn } from "@/lib/utils";
 import { useThemeTokens } from "@/theme/theme-provider";
 
 import { formatMessageTime } from "./format";
-import type { ChatMessage } from "./schemas";
+import type { ChatMessage, MessageReceipt } from "./schemas";
+
+// Green used for the "read" double tick (WhatsApp-style), distinct from the
+// muted grey of sent/delivered ticks.
+const READ_TICK = "#22c55e";
 
 export type BubbleProps = {
   message: ChatMessage;
@@ -15,8 +19,16 @@ export type BubbleProps = {
   groupedWithOlder: boolean;
   groupedWithNewer: boolean;
   showTimestamp: boolean;
+  receipt?: MessageReceipt;
   onRetry: (message: ChatMessage) => void;
 };
+
+/** ✓ sent · ✓✓ delivered · green ✓✓ read. */
+function ReceiptTicks({ receipt, muted }: { receipt: MessageReceipt; muted: string }) {
+  if (receipt === "read") return <CheckCheck size={14} color={READ_TICK} />;
+  if (receipt === "delivered") return <CheckCheck size={14} color={muted} />;
+  return <Check size={14} color={muted} />;
+}
 
 export const MessageBubble = memo(function MessageBubble({
   message,
@@ -24,6 +36,7 @@ export const MessageBubble = memo(function MessageBubble({
   groupedWithOlder,
   groupedWithNewer,
   showTimestamp,
+  receipt,
   onRetry,
 }: BubbleProps) {
   const tokens = useThemeTokens();
@@ -78,9 +91,14 @@ export const MessageBubble = memo(function MessageBubble({
           <Text className="text-[11px] text-destructive">Not delivered · Tap to retry</Text>
         </View>
       ) : showTimestamp ? (
-        <Text className="mt-0.5 text-[11px] text-muted-foreground">
-          {sending ? "Sending…" : formatMessageTime(message.createdAt)}
-        </Text>
+        <View className="mt-0.5 flex-row items-center gap-1">
+          <Text className="text-[11px] text-muted-foreground">
+            {sending ? "Sending…" : formatMessageTime(message.createdAt)}
+          </Text>
+          {isMine && receipt && !sending ? (
+            <ReceiptTicks receipt={receipt} muted={tokens.mutedForeground} />
+          ) : null}
+        </View>
       ) : null}
     </View>
   );
