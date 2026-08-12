@@ -8,7 +8,9 @@ import {
   type ReactNode,
 } from "react";
 
+import { onSessionExpired } from "@/lib/auth-events";
 import { config } from "@/lib/config";
+import { queryClient } from "@/lib/query-client";
 import { clearTokens, getAccessToken, getRefreshToken, setTokens } from "@/lib/storage";
 import type { AgencyMembership } from "@/types/api";
 
@@ -167,6 +169,56 @@ async function fetchProfile(accessToken: string): Promise<MeUser | null> {
   }
 }
 
+/**
+ * Outcome of spending the stored refresh token. The three cases must stay
+ * distinct: only an outright rejection means the session is over. A network
+ * failure must NOT sign the user out, or launching the app offline would end a
+ * perfectly good session.
+ */
+type RefreshOutcome =
+  | { status: "ok"; accessToken: string }
+  | { status: "rejected" }
+  | { status: "unavailable" };
+
+/**
+ * Exchanges the stored refresh token for a fresh pair.
+ *
+ * Access tokens live 15 minutes (JWT_ACCESS_EXPIRES_IN); the refresh token is
+ * what actually carries the session — the backend gives it a 30-day idle window
+ * (SESSION_IDLE_DAYS) and rolls that deadline forward on every refresh. So an
+ * expired access token at launch says nothing about whether the user is still
+ * signed in, and must trigger a refresh rather than a logout.
+ */
+async function refreshSession(): Promise<RefreshOutcome> {
+  const refreshToken = await getRefreshToken();
+  if (!refreshToken) return { status: "rejected" };
+
+  let res: Response;
+  try {
+    res = await fetch(`${BASE}/api/auth/refresh`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refreshToken }),
+    });
+  } catch {
+    return { status: "unavailable" }; // offline / server unreachable
+  }
+
+  // 401 is the backend saying the idle window elapsed or the token was revoked.
+  if (res.status === 401) return { status: "rejected" };
+  if (!res.ok) return { status: "unavailable" }; // 5xx — transient, keep the tokens
+
+  try {
+    const body = await res.json();
+    const tokens = body.data ?? body;
+    if (!tokens?.accessToken || !tokens?.refreshToken) return { status: "unavailable" };
+    await setTokens(tokens.accessToken, tokens.refreshToken);
+    return { status: "ok", accessToken: tokens.accessToken as string };
+  } catch {
+    return { status: "unavailable" };
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [profile, setProfile] = useState<MeUser | null>(null);
@@ -177,6 +229,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     (async () => {
       try {
         const token = await getAccessToken();
+
+        // 1. Access token still valid — use it as-is.
         if (token) {
           const payload = decodeJwt(token);
           if (payload && (payload.exp as number) * 1000 > Date.now()) {
@@ -184,13 +238,58 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setProfile(await fetchProfile(token));
             return;
           }
-          await clearTokens(); // expired
         }
+
+        // 2. Access token missing or older than 15 minutes. This used to call
+        //    clearTokens() and sign the user out — which threw away a refresh
+        //    token good for another 30 idle days, so reopening the app after a
+        //    short break logged them out. Spend the refresh token instead.
+        const outcome = await refreshSession();
+
+        if (outcome.status === "ok") {
+          const payload = decodeJwt(outcome.accessToken);
+          if (payload) {
+            setUser({ userId: payload.userId as string, email: payload.email as string });
+            setProfile(await fetchProfile(outcome.accessToken));
+            return;
+          }
+        }
+
+        // 3. Server unreachable: keep the tokens and carry on with the identity
+        //    from the (expired) access token, so an offline launch isn't a logout.
+        //    The axios 401 interceptor refreshes once connectivity returns.
+        if (outcome.status === "unavailable") {
+          const payload = token ? decodeJwt(token) : null;
+          if (payload) {
+            setUser({ userId: payload.userId as string, email: payload.email as string });
+          }
+          return;
+        }
+
+        // 4. Refresh genuinely rejected — 30 idle days elapsed, or it was revoked.
+        await clearTokens();
       } finally {
         setIsLoading(false);
       }
     })();
   }, []);
+
+  // The axios layer clears tokens when a refresh fails, but it can't touch React
+  // state. Until this existed, `user` stayed set afterwards: the app looked signed
+  // in, the persisted query cache kept rendering the previous session's data, and
+  // every request went out with no Authorization header. Tear the session down so
+  // the route guard sends them to sign in instead.
+  useEffect(
+    () =>
+      onSessionExpired(() => {
+        setUser(null);
+        setProfile(null);
+        // Drop cached authenticated data (saved properties, inquiries, chat) so it
+        // can't be acted on — a stale row would only produce another 401.
+        queryClient.clear();
+      }),
+    [],
+  );
 
   /** Shared: persist tokens, set identity from the JWT, bootstrap the profile. */
   const establishSession = useCallback(async (accessToken: string, refreshToken: string) => {
@@ -276,6 +375,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await clearTokens();
     setUser(null);
     setProfile(null);
+    // Same reasoning as the session-expiry path: the query cache is persisted to
+    // AsyncStorage, so without this the next person to sign in on this device
+    // would briefly see the previous user's saved properties and chats.
+    queryClient.clear();
   }, []);
 
   const createGeneralProfile = useCallback(async (bio?: string) => {

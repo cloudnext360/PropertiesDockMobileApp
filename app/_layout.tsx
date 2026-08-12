@@ -68,6 +68,11 @@ export default function RootLayout() {
             screenOptions={{
               headerShown: false,
               headerTitleStyle: { fontFamily: "PlusJakartaSans_600SemiBold" },
+              // iOS labels the back button with the PREVIOUS screen's title, and
+              // screens that only set headerShown:false have no title — so React
+              // Navigation falls back to the raw route name ("property/[slug]").
+              // "minimal" keeps the chevron and drops the label everywhere.
+              headerBackButtonDisplayMode: "minimal",
             }}
           >
             {/* First-launch onboarding (animated splash + slides). While unseen it is

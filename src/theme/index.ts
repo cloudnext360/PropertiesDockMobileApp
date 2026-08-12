@@ -24,7 +24,10 @@ export const navigationDarkTheme = {
   ...DarkTheme,
   colors: {
     ...DarkTheme.colors,
-    primary: tokensDark.brandForeground,
+    // Was brandForeground, which only worked because it used to be near-white in
+    // dark mode. Now that the brand pair flips (see global.css .dark:root), the
+    // accent to use is the brand itself — matching navigationLightTheme.
+    primary: tokensDark.brand,
     background: tokensDark.background,
     card: tokensDark.card,
     text: tokensDark.foreground,

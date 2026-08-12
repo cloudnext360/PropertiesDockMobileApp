@@ -1,7 +1,7 @@
 import { FlashList } from "@shopify/flash-list";
 import { useIsFocused } from "@react-navigation/native";
 import { useFocusEffect, useRouter, type Href } from "expo-router";
-import { ChevronLeft, ChevronRight } from "lucide-react-native";
+import { ChevronLeft, ChevronRight, Ban } from "lucide-react-native";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { ActivityIndicator, Pressable, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -11,6 +11,7 @@ import { AppImage, Avatar, AvatarFallback, AvatarImage, Button, Text } from "@/c
 import { formatOmr } from "@/constants/locale";
 import { useAuth } from "@/context/AuthContext";
 import { setActiveConversation } from "@/features/notifications/push";
+import { propertyAvailability } from "@/lib/property-status";
 import { useThemeTokens } from "@/theme/theme-provider";
 
 import { useTypingIndicator } from "./ChatSocketProvider";
@@ -18,7 +19,7 @@ import { Composer } from "./Composer";
 import { formatDayLabel, isSameDay } from "./format";
 import { newClientId, useConversations, useMarkRead, useMessages, useSendMessage } from "./hooks";
 import { MessageBubble } from "./MessageBubble";
-import type { ChatMessage, MessageReceipt } from "./schemas";
+import type { ChatMessage, ChatPropertyRef, MessageReceipt } from "./schemas";
 import { TypingIndicator } from "./TypingIndicator";
 
 // Messages within this window from the same sender render as one grouped stack.
@@ -221,33 +222,9 @@ export function ChatThread({ id }: { id: string }) {
         </View>
 
         {property ? (
-          <Pressable
-            onPress={() =>
-              router.push({
-                pathname: "/property/[slug]",
-                params: { slug: property.slug },
-              } as unknown as Href)
-            }
-            className="flex-row items-center gap-3 border-t border-border px-3 py-2.5 active:bg-muted"
-          >
-            <View className="h-12 w-12 overflow-hidden rounded-lg bg-muted">
-              <AppImage
-                source={property.image ? { uri: property.image } : undefined}
-                style={{ width: "100%", height: "100%" }}
-                contentFit="cover"
-                recyclingKey={property.id}
-              />
-            </View>
-            <View className="flex-1">
-              <Text numberOfLines={1} className="text-sm font-jakarta-extrabold text-brand">
-                {formatOmr(property.price, property.currency, property.listingType)}
-              </Text>
-              <Text numberOfLines={1} className="text-xs font-jakarta-medium text-foreground">
-                {property.propertyName}
-              </Text>
-            </View>
-            <ChevronRight size={18} color={tokens.mutedForeground} />
-          </Pressable>
+          // The thread outlives the listing (deletes are soft), so an unavailable
+          // property renders as a non-tappable notice instead of linking to a 404.
+          <PropertyContext property={property} />
         ) : null}
       </View>
 
@@ -306,5 +283,81 @@ export function ChatThread({ id }: { id: string }) {
         </View>
       </KeyboardAvoidingView>
     </View>
+  );
+}
+
+/**
+ * The linked-property strip under the thread header.
+ *
+ * A conversation keeps its propertyId after the listing is soft-deleted, so this
+ * has two modes: a tappable row that opens the listing, or — once the listing is
+ * no longer APPROVED — a dimmed, non-tappable notice naming the new state. The
+ * participants keep their message history either way.
+ */
+function PropertyContext({ property }: { property: ChatPropertyRef }) {
+  const router = useRouter();
+  const tokens = useThemeTokens();
+  const { available, label } = propertyAvailability(property.status);
+
+  const body = (
+    <>
+      <View className="h-12 w-12 overflow-hidden rounded-lg bg-muted">
+        <AppImage
+          source={property.image ? { uri: property.image } : undefined}
+          style={{ width: "100%", height: "100%", opacity: available ? 1 : 0.4 }}
+          contentFit="cover"
+          recyclingKey={property.id}
+        />
+      </View>
+      <View className="flex-1">
+        {available ? (
+          <Text numberOfLines={1} className="text-sm font-jakarta-extrabold text-brand">
+            {formatOmr(property.price, property.currency, property.listingType)}
+          </Text>
+        ) : (
+          <View className="flex-row items-center gap-1">
+            <Ban size={12} color={tokens.mutedForeground} />
+            <Text numberOfLines={1} className="text-xs font-jakarta-bold text-muted-foreground">
+              {`This property is ${label?.toLowerCase() ?? "unavailable"}`}
+            </Text>
+          </View>
+        )}
+        <Text
+          numberOfLines={1}
+          className={
+            "text-xs font-jakarta-medium " +
+            (available ? "text-foreground" : "text-muted-foreground line-through")
+          }
+        >
+          {property.propertyName}
+        </Text>
+      </View>
+      {available ? <ChevronRight size={18} color={tokens.mutedForeground} /> : null}
+    </>
+  );
+
+  if (!available) {
+    return (
+      <View
+        accessibilityLabel={`Property ${label ?? "unavailable"}`}
+        className="flex-row items-center gap-3 border-t border-border bg-muted/40 px-3 py-2.5"
+      >
+        {body}
+      </View>
+    );
+  }
+
+  return (
+    <Pressable
+      onPress={() =>
+        router.push({
+          pathname: "/property/[slug]",
+          params: { slug: property.slug },
+        } as unknown as Href)
+      }
+      className="flex-row items-center gap-3 border-t border-border px-3 py-2.5 active:bg-muted"
+    >
+      {body}
+    </Pressable>
   );
 }

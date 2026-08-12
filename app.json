@@ -65,6 +65,13 @@
       "expo-secure-store",
       "expo-notifications",
       [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow PropertiesDock to access your photos so you can add them to a listing.",
+          "cameraPermission": "Allow PropertiesDock to use your camera so you can photograph a property for a listing."
+        }
+      ],
+      [
         "expo-local-authentication",
         {
           "faceIDPermission": "Unlock PropertiesDock with Face ID."

@@ -1,4 +1,4 @@
-import { Bell, Eye, EyeOff, Lock, Shield } from "lucide-react-native";
+import { Bell, Eye, EyeOff, Lock, Moon, Palette, Shield, Smartphone, Sun } from "lucide-react-native";
 import { useState, type ComponentType } from "react";
 import { ActivityIndicator, Pressable, TextInput, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
@@ -7,7 +7,11 @@ import { toast } from "sonner-native";
 import { Button, Switch, Text } from "@/components/ui";
 import { useChangePassword } from "@/hooks/useChangePassword";
 import { useUpdateUserSettings, useUserSettings } from "@/hooks/useUserSettings";
-import { useThemeTokens } from "@/theme/theme-provider";
+import {
+  useThemePreference,
+  useThemeTokens,
+  type ThemePreference,
+} from "@/theme/theme-provider";
 
 type IconType = ComponentType<{ size?: number; color?: string }>;
 
@@ -101,6 +105,63 @@ function PasswordField({
   );
 }
 
+/**
+ * Appearance card — Light / Dark / System.
+ *
+ * Stored on the device (AsyncStorage), not on the account: it's a per-device
+ * preference, and it must apply before any authenticated request resolves.
+ */
+function AppearanceCard() {
+  const tokens = useThemeTokens();
+  const { preference, setPreference } = useThemePreference();
+
+  const options: { value: ThemePreference; label: string; icon: IconType }[] = [
+    { value: "light", label: "Light", icon: Sun },
+    { value: "dark", label: "Dark", icon: Moon },
+    { value: "system", label: "System", icon: Smartphone },
+  ];
+
+  return (
+    <Section title="Appearance" icon={Palette}>
+      <View className="gap-3 py-1">
+        <View className="flex-row gap-2">
+          {options.map(({ value, label, icon: Icon }) => {
+            const selected = preference === value;
+            return (
+              <Pressable
+                key={value}
+                onPress={() => setPreference(value)}
+                accessibilityRole="radio"
+                accessibilityState={{ selected }}
+                accessibilityLabel={`${label} theme`}
+                className={
+                  "flex-1 items-center gap-1.5 rounded-xl border-2 py-3 " +
+                  (selected ? "border-brand bg-brand" : "border-border bg-card")
+                }
+              >
+                <Icon size={18} color={selected ? tokens.brandForeground : tokens.mutedForeground} />
+                <Text
+                  className={
+                    "text-xs font-jakarta-bold " +
+                    (selected ? "text-brand-foreground" : "text-muted-foreground")
+                  }
+                >
+                  {label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+        <Text className="text-xs text-muted-foreground">
+          {preference === "system"
+            ? "Follows your device's light or dark setting."
+            : `Always use the ${preference} theme, regardless of your device setting.`}
+        </Text>
+      </View>
+    </Section>
+  );
+}
+
 /** Change-password card — validates against the backend's password rules. */
 function ChangePasswordCard() {
   const [current, setCurrent] = useState("");
@@ -166,14 +227,6 @@ export function SettingsPanel() {
   const save = (payload: Parameters<typeof update.mutate>[0]) =>
     update.mutate(payload, { onError: () => toast.error("Couldn't save that setting.") });
 
-  if (isLoading || !settings) {
-    return (
-      <View className="flex-1 items-center justify-center">
-        <ActivityIndicator size="large" color={tokens.brand} />
-      </View>
-    );
-  }
-
   return (
     <KeyboardAwareScrollView
       showsVerticalScrollIndicator={false}
@@ -181,49 +234,62 @@ export function SettingsPanel() {
       bottomOffset={20}
       contentContainerStyle={{ gap: 16, paddingHorizontal: 16, paddingBottom: 40 }}
     >
-      <Section title="Notifications" icon={Bell}>
-        <ToggleRow
-          label="Email alerts"
-          desc="Inquiries, listings and account updates by email"
-          value={settings.emailNotifications}
-          onValueChange={(v) => save({ emailNotifications: v })}
-        />
-        <ToggleRow
-          label="Push alerts"
-          desc="Real-time alerts for messages and listing activity"
-          value={settings.pushNotifications}
-          onValueChange={(v) => save({ pushNotifications: v })}
-        />
-        <ToggleRow
-          label="SMS alerts"
-          desc="Text messages for urgent updates"
-          value={settings.smsNotifications}
-          onValueChange={(v) => save({ smsNotifications: v })}
-          last
-        />
-      </Section>
+      {/* Device-local, so it renders immediately — it used to sit behind the
+          settings fetch, which also meant a failed fetch left the whole screen
+          stuck on a spinner with no way to reach any of it. */}
+      <AppearanceCard />
 
-      <Section title="Privacy" icon={Shield}>
-        <ToggleRow
-          label="Public profile"
-          desc="Allow anyone to discover and view your profile"
-          value={settings.profileVisibility === "public"}
-          onValueChange={(v) => save({ profileVisibility: v ? "public" : "private" })}
-        />
-        <ToggleRow
-          label="Show phone number"
-          desc="Display your phone on your public profile"
-          value={settings.showPhone}
-          onValueChange={(v) => save({ showPhone: v })}
-        />
-        <ToggleRow
-          label="Show email"
-          desc="Display your email on your public profile"
-          value={settings.showEmail}
-          onValueChange={(v) => save({ showEmail: v })}
-          last
-        />
-      </Section>
+      {isLoading || !settings ? (
+        <View className="items-center justify-center py-10">
+          <ActivityIndicator size="large" color={tokens.brand} />
+        </View>
+      ) : (
+        <>
+          <Section title="Notifications" icon={Bell}>
+            <ToggleRow
+              label="Email alerts"
+              desc="Inquiries, listings and account updates by email"
+              value={settings.emailNotifications}
+              onValueChange={(v) => save({ emailNotifications: v })}
+            />
+            <ToggleRow
+              label="Push alerts"
+              desc="Real-time alerts for messages and listing activity"
+              value={settings.pushNotifications}
+              onValueChange={(v) => save({ pushNotifications: v })}
+            />
+            <ToggleRow
+              label="SMS alerts"
+              desc="Text messages for urgent updates"
+              value={settings.smsNotifications}
+              onValueChange={(v) => save({ smsNotifications: v })}
+              last
+            />
+          </Section>
+
+          <Section title="Privacy" icon={Shield}>
+            <ToggleRow
+              label="Public profile"
+              desc="Allow anyone to discover and view your profile"
+              value={settings.profileVisibility === "public"}
+              onValueChange={(v) => save({ profileVisibility: v ? "public" : "private" })}
+            />
+            <ToggleRow
+              label="Show phone number"
+              desc="Display your phone on your public profile"
+              value={settings.showPhone}
+              onValueChange={(v) => save({ showPhone: v })}
+            />
+            <ToggleRow
+              label="Show email"
+              desc="Display your email on your public profile"
+              value={settings.showEmail}
+              onValueChange={(v) => save({ showEmail: v })}
+              last
+            />
+          </Section>
+        </>
+      )}
 
       <ChangePasswordCard />
     </KeyboardAwareScrollView>

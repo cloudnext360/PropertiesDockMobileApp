@@ -80,10 +80,19 @@ export function Button({
     );
   }
 
-  const spinnerColor =
-    variant === "outline" || variant === "ghost" || variant === "link"
-      ? tokens.foreground
-      : tokens.brandForeground;
+  // Must mirror buttonTextVariants above: each variant's spinner takes that
+  // variant's TEXT color. This previously used brandForeground for every filled
+  // variant, which only looked right by accident — in dark mode it painted a
+  // near-white spinner onto the near-white `default` fill.
+  const spinnerColor = {
+    default: tokens.primaryForeground,
+    brand: tokens.brandForeground,
+    destructive: tokens.destructiveForeground,
+    secondary: tokens.secondaryForeground,
+    outline: tokens.foreground,
+    ghost: tokens.foreground,
+    link: tokens.brand,
+  }[variant ?? "default"];
 
   return (
     <Pressable className={classes} disabled={isDisabled} accessibilityRole="button" {...props}>

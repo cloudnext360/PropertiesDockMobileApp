@@ -1,4 +1,5 @@
-import axios, { type InternalAxiosRequestConfig } from "axios";
+import axios, { isAxiosError, type InternalAxiosRequestConfig } from "axios";
+import { emitSessionExpired } from "@/lib/auth-events";
 import { config } from "@/lib/config";
 import { clearTokens, getAccessToken, getRefreshToken, setTokens } from "@/lib/storage";
 
@@ -42,9 +43,25 @@ api.interceptors.response.use(
           await setTokens(tokens.accessToken, tokens.refreshToken);
           original.headers.set("Authorization", `Bearer ${tokens.accessToken}`);
           return api(original);
-        } catch {
-          await clearTokens();
+        } catch (refreshError) {
+          // Only a definitive rejection ends the session. A network blip or a 5xx
+          // must NOT — otherwise a moment of bad connectivity signs the user out
+          // despite the refresh token still being valid for weeks.
+          const status = isAxiosError(refreshError) ? refreshError.response?.status : undefined;
+          if (status === 401 || status === 403) {
+            // Clearing tokens alone left `user` set in AuthContext, so the app kept
+            // rendering persisted data and sending header-less requests. Announce
+            // it so auth state and the cached data get torn down together.
+            await clearTokens();
+            emitSessionExpired();
+          }
         }
+      } else {
+        // A 401 with no refresh token means the session is already gone (e.g. it
+        // was cleared by an earlier failed refresh). Recover instead of staying
+        // stuck in that state forever.
+        await clearTokens();
+        emitSessionExpired();
       }
     }
 

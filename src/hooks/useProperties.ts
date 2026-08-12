@@ -7,6 +7,8 @@ import type { ApiProperty, PaginatedEnvelope } from "@/types/api";
 
 // Mirror of web useProperties (PropertyDockFrontend/src/hooks/useProperties.ts).
 export interface PropertyFilters {
+  /** Restrict to one agency's listings (backend PropertyFiltersDto.agencyId). */
+  agencyId?: string;
   listingType?: "SALE" | "RENT";
   isFeatured?: boolean;
   category?: "RESIDENTIAL" | "COMMERCIAL";
@@ -26,7 +28,15 @@ export interface PropertyFilters {
   sortBy?: "price_asc" | "price_desc" | "newest" | "oldest" | "most_viewed";
 }
 
-export function useProperties(filters: PropertyFilters = {}) {
+/**
+ * `options.enabled` lets a caller hold the request until a dependent value is
+ * ready (e.g. the agency page waits for the agency id) — without it, the hook
+ * would fire an unfiltered "all properties" fetch on the first render.
+ */
+export function useProperties(
+  filters: PropertyFilters = {},
+  options: { enabled?: boolean } = {},
+) {
   const qs = new URLSearchParams();
   Object.entries(filters).forEach(([k, v]) => {
     if (v !== undefined && v !== null) qs.set(k, String(v));
@@ -35,6 +45,7 @@ export function useProperties(filters: PropertyFilters = {}) {
 
   return useQuery({
     queryKey: queryKeys.properties(filters),
+    enabled: options.enabled ?? true,
     queryFn: async () => {
       const res = await apiGet<PaginatedEnvelope<ApiProperty>>(
         `/api/properties${queryString ? `?${queryString}` : ""}`,

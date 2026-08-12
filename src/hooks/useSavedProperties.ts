@@ -53,6 +53,25 @@ export function useToggleSaveProperty() {
   const remove = useMutation({
     mutationKey: MUTATION_KEYS.unsaveProperty,
     mutationFn: (savedId: string) => apiDelete(`/api/saved-properties/${savedId}`),
+    // Optimistic removal. Without this the row only disappears after the request
+    // AND the refetch complete — and if NetInfo reports offline, React Query
+    // *pauses* the mutation, so nothing visibly happens at all until reconnect.
+    // Dropping it from the cache up front makes the tap always feel like it took,
+    // and the queued DELETE still replays later.
+    onMutate: async (savedId: string) => {
+      await qc.cancelQueries({ queryKey: queryKeys.savedProperties() });
+      const previous = qc.getQueryData<SavedProperty[]>(queryKeys.savedProperties());
+      qc.setQueryData<SavedProperty[]>(queryKeys.savedProperties(), (old) =>
+        // Match either id — the backend's DELETE accepts both, so callers may pass
+        // the saved-record id or the property id.
+        (old ?? []).filter((s) => s.id !== savedId && savedPropertyId(s) !== savedId),
+      );
+      return { previous };
+    },
+    onError: (_err, _savedId, ctx) => {
+      // Put the row back if the delete actually failed.
+      if (ctx?.previous) qc.setQueryData(queryKeys.savedProperties(), ctx.previous);
+    },
     onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.savedProperties() }),
   });
 

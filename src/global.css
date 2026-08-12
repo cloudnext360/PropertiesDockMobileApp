@@ -4,9 +4,10 @@
 
 /*
  * Design tokens ported from PropertyDockFrontend/src/app/globals.css.
- * Dark mode is CLASS-based (`.dark:root`), not `@media`, so the app can force
- * light regardless of the OS setting (next-themes parity — system disabled).
- * `brand*` is intentionally NOT overridden in dark mode (matches web).
+ * Dark mode is CLASS-based (`.dark:root`), not `@media`, so the app can pin
+ * light/dark regardless of the OS setting (next-themes parity).
+ * `brand*` IS overridden in dark mode — see the note in `.dark:root` below. The
+ * web app doesn't need to because it ships light-only.
  * --radius authored as 8px here (web uses 0.5rem == 8px) to avoid rem math on native.
  */
 @layer base {
@@ -59,6 +60,24 @@
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
 
+    /*
+     * Brand swaps roles in dark mode.
+     *
+     * The light-mode brand is a near-black navy (L 12%). Against this
+     * background (L 4.9%) that is roughly 1.2:1 contrast — which is why
+     * `text-brand` was effectively invisible in dark mode.
+     *
+     * Lightening --brand fixes every `text-brand` usage (~6.6:1 here). But
+     * --brand is also a FILL (`bg-brand`, paired with `text-brand-foreground`),
+     * and near-white on light blue would then fail — so --brand-foreground
+     * darkens to match, keeping filled buttons at roughly 5.9:1. Flipping both
+     * together is what lets all brand usages stay correct with no component
+     * changes.
+     */
+    --brand: 213 90% 62%;
+    --brand-foreground: 213 100% 10%;
+    --brand-dark: 180 60% 60%;
+
     --card: 222.2 84% 4.9%;
     --card-foreground: 210 40% 98%;
 
@@ -77,8 +96,18 @@
     --accent: 217.2 32.6% 17.5%;
     --accent-foreground: 210 40% 98%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    /*
+     * Destructive flips roles here for the same reason as brand above.
+     *
+     * The inherited dark value was a DARK red (L 30.6%), which on this
+     * background lands near 2:1 — so all 16 `text-destructive` form errors and
+     * the 10 icon usages (including the saved-listing heart) were barely
+     * visible. Lightening it puts text at ~4.9:1; the foreground darkens to
+     * match so the `bg-destructive` fills (button, badge, NetworkBanner) stay
+     * readable at ~4.6:1 instead of dropping to ~4.0:1 with white text.
+     */
+    --destructive: 0 72% 58%;
+    --destructive-foreground: 0 70% 10%;
 
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;

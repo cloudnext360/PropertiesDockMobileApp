@@ -1,5 +1,15 @@
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { ArrowLeft, Bath, BedDouble, CalendarDays, Eye, Heart, MapPin, Maximize } from "lucide-react-native";
+import { useLocalSearchParams, useRouter, type Href } from "expo-router";
+import {
+  ArrowLeft,
+  Bath,
+  BedDouble,
+  CalendarDays,
+  ChevronRight,
+  Eye,
+  Heart,
+  MapPin,
+  Maximize,
+} from "lucide-react-native";
 import { useEffect, useMemo, useState } from "react";
 import { Pressable, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -24,8 +34,7 @@ import { MessageButton } from "@/features/chat/MessageButton";
 import { FullscreenGallery } from "@/features/property/FullscreenGallery";
 import { ImageCarousel } from "@/features/property/ImageCarousel";
 import { InquiryForm } from "@/features/property/InquiryForm";
-// MAP DISABLED for now — re-enable this import together with the mini-map block below.
-// import { PropertyMap } from "@/features/property/PropertyMap";
+import { PropertyMap } from "@/features/property/PropertyMap";
 import { useAuth } from "@/context/AuthContext";
 import { usePropertyBySlug } from "@/hooks/usePropertyBySlug";
 import { useSavedProperties, useToggleSaveProperty } from "@/hooks/useSavedProperties";
@@ -85,8 +94,7 @@ export default function PropertyDetailScreen() {
 
   const images = property.images.map((i) => i.url);
   const isSaved = savedMap.has(property.id);
-  // MAP DISABLED for now — re-enable with the mini-map block below.
-  // const hasCoords = typeof property.latitude === "number" && typeof property.longitude === "number";
+  const hasCoords = typeof property.latitude === "number" && typeof property.longitude === "number";
   const owner = property.agencyMember ?? property.generalUser;
   const ownerUser = owner?.user;
   const ownerName = ownerUser ? `${ownerUser.firstName} ${ownerUser.lastName}`.trim() : "Owner";
@@ -169,14 +177,12 @@ export default function PropertyDetailScreen() {
             {property.yearBuilt != null ? <Spec icon={<CalendarDays size={18} color={tokens.brand} />} label={`Built ${property.yearBuilt}`} /> : null}
           </View>
 
-          {/* Mini map — MAP DISABLED for now. To re-enable: uncomment the PropertyMap
-              import and `hasCoords` above, then uncomment this block.
+          {/* Mini map */}
           {hasCoords ? (
             <View className="h-44 overflow-hidden rounded-xl border border-border">
               <PropertyMap properties={[property as ApiProperty]} />
             </View>
           ) : null}
-          */}
 
           {/* Description */}
           {property.description ? (
@@ -189,25 +195,57 @@ export default function PropertyDetailScreen() {
           <ChipRow title="Features" items={property.features} />
           <ChipRow title="Amenities" items={property.amenities} />
 
-          {/* Owner / agent */}
+          {/* Owner / agent — tapping opens their public profile (/users/:id).
+              Anonymous/legacy listings can have no linked user, in which case the
+              card stays static rather than pushing a route with an empty id. */}
           <View className="gap-2">
             <Text className="font-jakarta-semibold text-foreground">Listed by</Text>
-            <View className="flex-row items-center gap-3 rounded-xl border border-border bg-card p-3">
-              <Avatar alt={ownerName}>
-                {ownerUser?.avatarUrl ? (
-                  <AvatarImage source={{ uri: resolveImageUrl(ownerUser.avatarUrl) }} />
-                ) : null}
-                <AvatarFallback>
-                  <Text className="font-jakarta-bold text-muted-foreground">
-                    {ownerName.slice(0, 2).toUpperCase()}
-                  </Text>
-                </AvatarFallback>
-              </Avatar>
-              <View className="flex-1">
-                <Text className="font-jakarta-semibold text-foreground">{ownerName}</Text>
-                <Text className="text-xs text-muted-foreground">{ownerRole}</Text>
-              </View>
-            </View>
+            {(() => {
+              const ownerCard = (
+                <>
+                  <Avatar alt={ownerName}>
+                    {ownerUser?.avatarUrl ? (
+                      <AvatarImage source={{ uri: resolveImageUrl(ownerUser.avatarUrl) }} />
+                    ) : null}
+                    <AvatarFallback>
+                      <Text className="font-jakarta-bold text-muted-foreground">
+                        {ownerName.slice(0, 2).toUpperCase()}
+                      </Text>
+                    </AvatarFallback>
+                  </Avatar>
+                  <View className="flex-1">
+                    <Text className="font-jakarta-semibold text-foreground">{ownerName}</Text>
+                    <Text className="text-xs text-muted-foreground">{ownerRole}</Text>
+                  </View>
+                </>
+              );
+
+              if (!ownerUser?.id) {
+                return (
+                  <View className="flex-row items-center gap-3 rounded-xl border border-border bg-card p-3">
+                    {ownerCard}
+                  </View>
+                );
+              }
+
+              return (
+                <Pressable
+                  onPress={() => {
+                    haptics.light();
+                    router.push({
+                      pathname: "/users/[id]",
+                      params: { id: ownerUser.id },
+                    } as unknown as Href);
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel={`View ${ownerName}'s profile`}
+                  className="flex-row items-center gap-3 rounded-xl border border-border bg-card p-3 active:bg-muted"
+                >
+                  {ownerCard}
+                  <ChevronRight size={18} color={tokens.mutedForeground} />
+                </Pressable>
+              );
+            })()}
           </View>
         </View>
       </ScrollView>

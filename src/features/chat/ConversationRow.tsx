@@ -3,6 +3,7 @@ import { memo } from "react";
 import { Pressable, View } from "react-native";
 
 import { Avatar, AvatarFallback, AvatarImage, Text } from "@/components/ui";
+import { propertyAvailability } from "@/lib/property-status";
 import { cn } from "@/lib/utils";
 import { useThemeTokens } from "@/theme/theme-provider";
 
@@ -84,12 +85,29 @@ export const ConversationRow = memo(function ConversationRow({
         </View>
 
         {conversation.property ? (
-          <View className="flex-row items-center gap-1">
-            <Building2 size={12} color={tokens.mutedForeground} />
-            <Text numberOfLines={1} className="flex-1 text-xs text-muted-foreground">
-              {conversation.property.propertyName}
-            </Text>
-          </View>
+          // Strike through the name when the listing is gone, so the thread reads
+          // as being about a dead listing without having to open it.
+          (() => {
+            const { available, label } = propertyAvailability(conversation.property.status);
+            return (
+              <View className="flex-row items-center gap-1">
+                <Building2 size={12} color={tokens.mutedForeground} />
+                <Text
+                  numberOfLines={1}
+                  className={
+                    "flex-1 text-xs text-muted-foreground" + (available ? "" : " line-through")
+                  }
+                >
+                  {conversation.property.propertyName}
+                </Text>
+                {available ? null : (
+                  <Text className="text-[10px] font-jakarta-bold text-muted-foreground">
+                    {label}
+                  </Text>
+                )}
+              </View>
+            );
+          })()
         ) : null}
       </View>
     </Pressable>

@@ -17,6 +17,9 @@ export const ChatPropertyRefSchema = z.object({
   id: z.string(),
   propertyName: z.string(),
   slug: z.string(),
+  // Optional so a backend that predates the field doesn't fail validation —
+  // propertyAvailability() treats a missing status as available.
+  status: z.string().optional(),
   price: z.number(),
   currency: z.string(),
   listingType: z.enum(["SALE", "RENT"]),

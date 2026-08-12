@@ -1,6 +1,6 @@
 import { FlashList } from "@shopify/flash-list";
 import { useRouter, type Href } from "expo-router";
-import { Heart, MapPin } from "lucide-react-native";
+import { Ban, Heart, MapPin } from "lucide-react-native";
 import { Pressable, View } from "react-native";
 import { toast } from "sonner-native";
 
@@ -8,6 +8,7 @@ import { AppImage, Button, Skeleton, Text } from "@/components/ui";
 import { useAuth } from "@/context/AuthContext";
 import { useSavedProperties, useToggleSaveProperty } from "@/hooks/useSavedProperties";
 import { formatOmr } from "@/constants/locale";
+import { propertyAvailability } from "@/lib/property-status";
 import { useThemeTokens } from "@/theme/theme-provider";
 import type { SavedProperty } from "@/types/dashboard";
 
@@ -52,8 +53,15 @@ export function SavedList() {
     );
   }
 
+  // The generic message hid the real cause (401 vs 404 vs network), which made
+  // "remove doesn't work" impossible to diagnose from the UI.
   const unsave = (s: SavedProperty) =>
-    remove.mutate(s.id, { onError: () => toast.error("Couldn't remove") });
+    remove.mutate(s.id, {
+      onError: (err) =>
+        toast.error("Couldn't remove", {
+          description: err instanceof Error ? err.message : undefined,
+        }),
+    });
 
   return (
     <FlashList
@@ -66,18 +74,17 @@ export function SavedList() {
         if (!p) return null;
         const image = p.images?.[0]?.url;
         const location = [p.city, p.country].filter(Boolean).join(", ");
-        return (
-          <Pressable
-            onPress={() =>
-              router.push({ pathname: "/property/[slug]", params: { slug: p.slug } } as unknown as Href)
-            }
-            accessibilityRole="button"
-            className="flex-row gap-3 rounded-2xl border border-border bg-card p-3 active:opacity-90"
-          >
+        // Deletes are soft, so a saved entry still resolves after the listing is
+        // pulled. Keep the card (so the user sees why it changed) but make it
+        // inert — only the remove button stays active.
+        const { available, label } = propertyAvailability(p.status);
+
+        const card = (
+          <>
             <View className="h-24 w-24 overflow-hidden rounded-xl bg-muted">
               <AppImage
                 source={image ? { uri: image } : undefined}
-                style={{ width: "100%", height: "100%" }}
+                style={{ width: "100%", height: "100%", opacity: available ? 1 : 0.4 }}
                 contentFit="cover"
                 recyclingKey={p.id}
               />
@@ -85,23 +92,49 @@ export function SavedList() {
 
             <View className="flex-1 gap-1">
               <View className="flex-row items-start justify-between gap-2">
-                <Text className="flex-1 text-base font-jakarta-extrabold text-brand" numberOfLines={1}>
-                  {formatOmr(p.price, p.currency, p.listingType)}
-                </Text>
+                {available ? (
+                  <Text
+                    className="flex-1 text-base font-jakarta-extrabold text-brand"
+                    numberOfLines={1}
+                  >
+                    {formatOmr(p.price, p.currency, p.listingType)}
+                  </Text>
+                ) : (
+                  <View className="flex-1 flex-row items-center gap-1">
+                    <Ban size={13} color={tokens.mutedForeground} />
+                    <Text
+                      className="flex-1 text-xs font-jakarta-bold text-muted-foreground"
+                      numberOfLines={1}
+                    >
+                      {label}
+                    </Text>
+                  </View>
+                )}
+                {/* 44pt target with NO negative margins: a negative margin pushes
+                    part of the button outside the parent's bounds, and Android
+                    clips touches (including hitSlop) to those bounds — so the
+                    overhanging portion was simply dead. */}
                 <Pressable
                   onPress={(e) => {
                     e.stopPropagation?.();
                     unsave(item);
                   }}
-                  hitSlop={10}
+                  hitSlop={8}
+                  accessibilityRole="button"
                   accessibilityLabel="Remove from saved"
-                  className="-mr-1 -mt-1 h-8 w-8 items-center justify-center rounded-full active:bg-muted"
+                  className="h-11 w-11 items-center justify-center rounded-full active:bg-muted"
                 >
                   <Heart size={20} color={tokens.destructive} fill={tokens.destructive} />
                 </Pressable>
               </View>
 
-              <Text className="font-jakarta-semibold text-foreground" numberOfLines={2}>
+              <Text
+                className={
+                  "font-jakarta-semibold " +
+                  (available ? "text-foreground" : "text-muted-foreground line-through")
+                }
+                numberOfLines={2}
+              >
                 {p.propertyName}
               </Text>
 
@@ -114,6 +147,26 @@ export function SavedList() {
                 </View>
               ) : null}
             </View>
+          </>
+        );
+
+        if (!available) {
+          return (
+            <View className="flex-row gap-3 rounded-2xl border border-border bg-muted/40 p-3">
+              {card}
+            </View>
+          );
+        }
+
+        return (
+          <Pressable
+            onPress={() =>
+              router.push({ pathname: "/property/[slug]", params: { slug: p.slug } } as unknown as Href)
+            }
+            accessibilityRole="button"
+            className="flex-row gap-3 rounded-2xl border border-border bg-card p-3 active:opacity-90"
+          >
+            {card}
           </Pressable>
         );
       }}

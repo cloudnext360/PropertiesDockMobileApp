@@ -16,6 +16,7 @@ export const queryKeys = {
   savedProperties: () => ["saved-properties"] as const,
   verificationDocs: () => ["verification-docs"] as const,
   agencyBySlug: (slug: string) => ["agency-by-slug", slug] as const,
+  publicUser: (userId: string) => ["user", "public", userId] as const,
   chatConversations: () => ["chat", "conversations"] as const,
   chatMessages: (conversationId: string) => ["chat", "messages", conversationId] as const,
   chatUnreadCount: () => ["chat", "unread-count"] as const,

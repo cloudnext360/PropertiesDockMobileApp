@@ -1,4 +1,4 @@
-import Constants from "expo-constants";
+import Constants, { ExecutionEnvironment } from "expo-constants";
 import { useMemo, useRef, useState } from "react";
 import { Platform, StyleSheet, View } from "react-native";
 import MapView, { Marker } from "react-native-maps";
@@ -8,13 +8,17 @@ import Supercluster from "supercluster";
 import { Text } from "@/components/ui";
 import type { PropertyMapProps } from "@/features/property/PropertyMap.types";
 
-// Android's Google Maps provider crashes at mount without a Maps SDK key. When
-// the key isn't configured (extra.googleMapsApiKey), render a fallback instead
-// of MapView so the screen doesn't crash. iOS uses Apple Maps (no key needed).
+// Android's Google Maps provider crashes at mount without a Maps SDK key. In a
+// dev-client / standalone build the key comes from our own manifest
+// (extra.googleMapsApiKey) — when it's unset, render a fallback instead of
+// MapView so the screen doesn't crash. Expo Go is exempt: it ships its own Maps
+// key in its manifest, so no key of ours is required there. iOS uses Apple Maps
+// (no key needed) since we don't opt into provider="google".
+const IS_EXPO_GO = Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
 const HAS_ANDROID_MAPS_KEY = Boolean(
   (Constants.expoConfig?.extra as { googleMapsApiKey?: string } | undefined)?.googleMapsApiKey,
 );
-const MAPS_AVAILABLE = Platform.OS !== "android" || HAS_ANDROID_MAPS_KEY;
+const MAPS_AVAILABLE = Platform.OS !== "android" || IS_EXPO_GO || HAS_ANDROID_MAPS_KEY;
 
 // Oman (Muscat) default view.
 const OMAN_REGION: Region = {

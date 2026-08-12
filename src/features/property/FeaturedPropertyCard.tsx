@@ -21,7 +21,9 @@ interface FeaturedPropertyCardProps {
  * Home "Recommended for you" card — large rounded hero image with a deal badge
  * and a floating save heart, then the name/price line and a row of spec pills.
  * Distinct from PropertyCard (used in the Buy list) so the two layouts can evolve
- * independently.
+ * independently — but the surface uses the same bg-card/border-border tokens, so
+ * both read as one card style. (It was hardcoded bg-white + border-gray-100, which
+ * matched in light mode but stayed white against the dark background.)
  */
 export const FeaturedPropertyCard = memo(function FeaturedPropertyCard({
   property,
@@ -44,7 +46,7 @@ export const FeaturedPropertyCard = memo(function FeaturedPropertyCard({
       }
       accessibilityRole="button"
       accessibilityLabel={`${property.propertyName}, ${formatOmr(property.price, property.currency, property.listingType)}, ${location}`}
-      className="gap-3 active:opacity-95 bg-white border border-gray-100 px-1 py-2.5 rounded-3xl"
+      className="gap-3 active:opacity-95 bg-card border border-border px-1 py-2.5 rounded-3xl"
     >
       <View className="overflow-hidden rounded-3xl bg-muted">
         <View className="aspect-[16/11]">

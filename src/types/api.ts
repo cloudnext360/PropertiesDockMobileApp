@@ -36,6 +36,29 @@ export interface FullUser {
   agencyMemberships: AgencyMembership[];
 }
 
+/**
+ * Agency public profile — GET /api/agencies/public/:slug.
+ *
+ * Shaped by the backend's buildPublicProfile(): note `bannerUrl` is the mapped
+ * name for the DB's `coverUrl`, and rating/reviewCount/reviews are hardcoded
+ * placeholders (0/0/[]) until reviews exist. The listings themselves are NOT
+ * included — fetch them separately with useProperties({ agencyId }).
+ */
+export interface AgencyPublicProfile {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  logoUrl: string | null;
+  bannerUrl: string | null;
+  rating: number;
+  reviewCount: number;
+  totalListings: number;
+  soldListings: number;
+  happyClients: number;
+  reviews: unknown[];
+}
+
 export interface PublicUserAgencyMembership {
   id: string;
   role: "ADMIN" | "SUB_ADMIN" | "BROKER";
